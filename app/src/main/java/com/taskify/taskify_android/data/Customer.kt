@@ -2,7 +2,7 @@ package com.taskify.taskify_android.data
 
 import java.time.LocalDateTime
 
-data class Customer(
+open class Customer(
     override val id: Long,
     override val firstName: String,
     override val lastName: String,
@@ -13,8 +13,8 @@ data class Customer(
     override val role: Role = Role.CUSTOMER,
     override val createdAt: LocalDateTime,
     override val updatedAt: LocalDateTime,
-    val address: String,
-    val city: String,
-    val country: String,
-    val zipCode: String
+    open val address: String,
+    open val city: String,
+    open val country: String,
+    open val zipCode: String
 ) : User

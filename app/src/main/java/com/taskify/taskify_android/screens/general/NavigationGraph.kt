@@ -12,6 +12,7 @@ fun NavigationGraph(navController: NavHostController) {
         composable("initScreen") {
             InitScreen(navController = navController)
         }
+
         // Authentication screen where user can choose to Login or Register
         composable("authScreen") {
             AuthScreen(navController = navController)
