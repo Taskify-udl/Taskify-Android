@@ -1,3 +1,3 @@
 package com.taskify.taskify_android.logic.viewmodels
 
-// lògica relacionada amb proveïdors
+// login i errors d’autenticació

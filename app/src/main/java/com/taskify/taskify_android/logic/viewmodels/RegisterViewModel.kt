@@ -1,3 +1,3 @@
 package com.taskify.taskify_android.logic.viewmodels
 
-// lògica relacionada amb proveïdors
+// validació de registre i crida a API
