@@ -1,4 +1,4 @@
-package com.taskify.taskify_android.data
+package com.taskify.taskify_android.data.models
 
 import java.time.LocalDateTime
 

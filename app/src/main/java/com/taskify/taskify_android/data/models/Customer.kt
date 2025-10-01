@@ -1,8 +1,8 @@
-package com.taskify.taskify_android.data
+package com.taskify.taskify_android.data.models
 
 import java.time.LocalDateTime
 
-data class Admin(
+open class Customer(
     override val id: Long,
     override val firstName: String,
     override val lastName: String,
@@ -10,7 +10,11 @@ data class Admin(
     override val password: String,
     override val phoneNumber: String,
     override val profilePic: String? = null,
-    override val role: Role = Role.ADMIN,
+    override val role: Role = Role.CUSTOMER,
     override val createdAt: LocalDateTime,
-    override val updatedAt: LocalDateTime
+    override val updatedAt: LocalDateTime,
+    open val address: String,
+    open val city: String,
+    open val country: String,
+    open val zipCode: String
 ) : User
