@@ -33,7 +33,6 @@ class AuthRepository(private val api: ApiService) {
         }
     }
 
-
     // ---------- LOGOUT ----------
     suspend fun logout(token: String): Boolean {
         val response = api.logout("Token $token")
