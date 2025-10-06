@@ -1,4 +1,4 @@
-package com.taskify.taskify_android.data.models
+package com.taskify.taskify_android.data.models.entities
 
 import java.math.BigDecimal
 import java.time.LocalDateTime
