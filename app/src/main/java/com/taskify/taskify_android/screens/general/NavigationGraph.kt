@@ -4,9 +4,12 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.taskify.taskify_android.logic.viewmodels.provideAuthViewModel
 
 @Composable
 fun NavigationGraph(navController: NavHostController) {
+    val authViewModel = provideAuthViewModel()
+
     NavHost(navController = navController, startDestination = "initScreen") {
         //  Init screen with animated app name
         composable("initScreen") {
@@ -20,12 +23,12 @@ fun NavigationGraph(navController: NavHostController) {
 
         // Placeholder Login screen
         composable("login") {
-            LoginScreen()
+            LoginScreen(navController, authViewModel)
         }
 
         // Placeholder Register screen
         composable("register") {
-            RegisterScreen()
+            RegisterScreen(authViewModel)
         }
     }
 }

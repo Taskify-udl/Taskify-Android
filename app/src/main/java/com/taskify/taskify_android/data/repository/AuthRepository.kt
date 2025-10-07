@@ -8,9 +8,9 @@ import com.taskify.taskify_android.data.network.ApiService
 
 class AuthRepository(private val api: ApiService) {
     // ---------- LOGIN ----------
-    suspend fun login(username: String, password: String): Resource<LoginResponse> {
+    suspend fun login(email: String, password: String): Resource<LoginResponse> {
         return try {
-            val response = api.login(LoginRequest(username, password))
+            val response = api.login(LoginRequest(email, password))
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body != null) {
