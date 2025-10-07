@@ -1,5 +1,6 @@
 package com.taskify.taskify_android.data.repository
 
+import android.util.Log
 import com.taskify.taskify_android.data.models.auth.LoginRequest
 import com.taskify.taskify_android.data.models.auth.LoginResponse
 import com.taskify.taskify_android.data.models.auth.RegisterRequest
@@ -8,9 +9,10 @@ import com.taskify.taskify_android.data.network.ApiService
 
 class AuthRepository(private val api: ApiService) {
     // ---------- LOGIN ----------
-    suspend fun login(email: String, password: String): Resource<LoginResponse> {
+    suspend fun login(username: String, password: String): Resource<LoginResponse> {
         return try {
-            val response = api.login(LoginRequest(email, password))
+            val response = api.login(LoginRequest(username, password))
+            Log.d("AuthRepository", "Login response: ${response.code()} ${response.message()}")
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body != null) {

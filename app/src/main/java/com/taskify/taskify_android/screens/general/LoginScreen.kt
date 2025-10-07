@@ -34,7 +34,6 @@ import com.taskify.taskify_android.ui.theme.PrimaryColor
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.material3.Icon
@@ -56,7 +55,7 @@ fun LoginScreen(
     val loginState by authViewModel.authState.collectAsState()
 
     // Vars per inputs
-    var email by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var localError by remember { mutableStateOf("") }
 
@@ -86,14 +85,13 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Email
+                // Username
                 OutlinedTextField(
-                    value = email,
-                    onValueChange = { newEmail -> email = newEmail },
-                    label = { Text(text = "Email") },
+                    value = username,
+                    onValueChange = { username = it },
+                    label = { Text("Username") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 // Password
@@ -109,11 +107,11 @@ fun LoginScreen(
                         localError = ""
 
                         // Validate inputs
-                        val validationError = validateLogin(email, password)
+                        val validationError = validateLogin(password)
                         if (validationError.isNotEmpty()) {
                             localError = validationError
                         } else {
-                            authViewModel.login(email, password)
+                            authViewModel.login(username, password)
                         }
                     },
                     modifier = Modifier

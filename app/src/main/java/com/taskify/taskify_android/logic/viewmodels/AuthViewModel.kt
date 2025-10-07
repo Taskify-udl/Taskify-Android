@@ -24,11 +24,11 @@ class AuthViewModel(
     val authState: StateFlow<AuthUiState> = _authState
 
     // ---------- LOGIN ----------
-    fun login(email: String, password: String) {
+    fun login(username: String, password: String) {
         viewModelScope.launch {
             _authState.value = AuthUiState(isLoading = true)
 
-            when (val result = repository.login(email, password)) {
+            when (val result = repository.login(username, password)) {
                 is Resource.Success -> {
                     _authState.value = AuthUiState(
                         isSuccess = true,
