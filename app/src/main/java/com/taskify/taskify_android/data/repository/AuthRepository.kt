@@ -1,6 +1,8 @@
 package com.taskify.taskify_android.data.repository
 
+import android.content.Context
 import android.util.Log
+import com.taskify.taskify_android.data.models.auth.AuthPreferences
 import com.taskify.taskify_android.data.models.auth.LoginRequest
 import com.taskify.taskify_android.data.models.auth.LoginResponse
 import com.taskify.taskify_android.data.models.auth.RegisterRequest
@@ -36,15 +38,21 @@ class AuthRepository(private val api: ApiService) {
     }
 
     // ---------- LOGOUT ----------
-    suspend fun logout(token: String): Boolean {
+    suspend fun logout(context: Context): Boolean {
+        val token = AuthPreferences.getTokenBlocking(context)
+        if (token.isNullOrEmpty()) return false
+
         val response = api.logout("Token $token")
+        if (response.isSuccessful) {
+            AuthPreferences.clearToken(context)
+        }
         return response.isSuccessful
     }
 
     // ---------- REGISTER ----------
-    suspend fun register(username: String, email: String, password: String): RegisterResponse? {
+    suspend fun register(firstName: String, lastName: String, username: String, email: String, password: String): RegisterResponse? {
         // TODO: implement when the endpoint becomes available
-        val request = RegisterRequest(username, email, password)
+        val request = RegisterRequest(firstName, lastName, username, email, password)
         val response = api.register(request)
         return if (response.isSuccessful) {
             response.body()

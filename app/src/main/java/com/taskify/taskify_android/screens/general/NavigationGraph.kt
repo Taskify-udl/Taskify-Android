@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.taskify.taskify_android.logic.viewmodels.provideAuthViewModel
 
+
 @Composable
 fun NavigationGraph(navController: NavHostController) {
     val authViewModel = provideAuthViewModel()
@@ -28,7 +29,12 @@ fun NavigationGraph(navController: NavHostController) {
 
         // Placeholder Register screen
         composable("register") {
-            RegisterScreen(authViewModel)
+            RegisterScreen(navController, authViewModel)
+        }
+
+        // Placeholder Home screen
+        composable("homeScreen") {
+            HomeScreen(navController, authViewModel)
         }
     }
 }

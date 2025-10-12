@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -38,6 +37,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.material3.Icon
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.sp
@@ -53,11 +54,23 @@ fun LoginScreen(
     authViewModel: AuthViewModel = viewModel()
 ) {
     val loginState by authViewModel.authState.collectAsState()
+    val context = LocalContext.current
 
     // Vars per inputs
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var localError by remember { mutableStateOf("") }
+
+    // Navigate to home screen if login is successful
+    LaunchedEffect(loginState.isSuccess) {
+        if (loginState.isSuccess) {
+            navController.navigate("homeScreen") {
+                popUpTo("login") { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -111,7 +124,8 @@ fun LoginScreen(
                         if (validationError.isNotEmpty()) {
                             localError = validationError
                         } else {
-                            authViewModel.login(username, password)
+                            authViewModel.login(username, password, context = context)
+                            // TODO: Navigate to home screen
                         }
                     },
                     modifier = Modifier
@@ -128,6 +142,7 @@ fun LoginScreen(
                     Text(
                         text = errorMsg,
                         color = MaterialTheme.colorScheme.error,
+
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -146,7 +161,10 @@ fun LoginScreen(
                     )
                     TextButton(onClick = {
                         navController.navigate("register") {
-                            popUpTo("loginForm") { inclusive = true }
+                            popUpTo("login") {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
                         }
                     }) {
                         Text(

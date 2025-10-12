@@ -1,7 +1,9 @@
 package com.taskify.taskify_android.logic.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.taskify.taskify_android.data.models.auth.AuthPreferences
 import com.taskify.taskify_android.data.repository.AuthRepository
 import com.taskify.taskify_android.data.repository.Resource
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,16 +26,18 @@ class AuthViewModel(
     val authState: StateFlow<AuthUiState> = _authState
 
     // ---------- LOGIN ----------
-    fun login(username: String, password: String) {
+    fun login(username: String, password: String, context: Context) {
         viewModelScope.launch {
             _authState.value = AuthUiState(isLoading = true)
 
             when (val result = repository.login(username, password)) {
                 is Resource.Success -> {
+                    AuthPreferences.saveToken(context, result.data.token)
                     _authState.value = AuthUiState(
                         isSuccess = true,
                         token = result.data.token // LoginResponse té camp token
                     )
+
                 }
                 is Resource.Error -> {
                     _authState.value = AuthUiState(
@@ -47,10 +51,10 @@ class AuthViewModel(
 
 
     // ---------- LOGOUT ----------
-    fun logout(token: String) {
+    fun logout(context: Context) {
         viewModelScope.launch {
             _authState.value = AuthUiState(isLoading = true)
-            val success = repository.logout(token)
+            val success = repository.logout(context)
             if (success) {
                 _authState.value = AuthUiState(isSuccess = true)
             } else {
@@ -63,12 +67,12 @@ class AuthViewModel(
     }
 
     // ---------- REGISTER ----------
-    fun register(username: String, email: String, password: String) {
+    fun register(firstName: String, lastName: String, username: String, email: String, password: String) {
         viewModelScope.launch {
             _authState.value = AuthUiState(isLoading = true)
             // TODO: Replace when register endpoint is ready
             try {
-                val response = repository.register(username, email, password)
+                val response = repository.register(firstName, lastName, username, email, password)
                 if (response != null) {
                     _authState.value = AuthUiState(isSuccess = true)
                 } else {

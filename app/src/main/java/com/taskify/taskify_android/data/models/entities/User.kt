@@ -6,6 +6,7 @@ interface User {
     val id: Long
     val firstName: String
     val lastName: String
+    val username: String
     val email: String
     val password: String
     val phoneNumber: String

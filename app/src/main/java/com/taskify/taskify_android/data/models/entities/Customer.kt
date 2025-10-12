@@ -6,6 +6,7 @@ open class Customer(
     override val id: Long,
     override val firstName: String,
     override val lastName: String,
+    override val username: String,
     override val email: String,
     override val password: String,
     override val phoneNumber: String,
