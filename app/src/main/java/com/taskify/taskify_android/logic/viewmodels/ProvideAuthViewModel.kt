@@ -25,4 +25,3 @@ fun provideAuthViewModel(context: Context = LocalContext.current): AuthViewModel
         }
     )
 }
-

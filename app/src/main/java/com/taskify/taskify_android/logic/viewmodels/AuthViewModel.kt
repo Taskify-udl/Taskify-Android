@@ -1,6 +1,7 @@
 package com.taskify.taskify_android.logic.viewmodels
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.taskify.taskify_android.data.models.auth.AuthPreferences
@@ -37,6 +38,7 @@ class AuthViewModel(
                         isSuccess = true,
                         token = result.data.token // LoginResponse té camp token
                     )
+                    Log.d("AuthViewModel", "Login successful. Token: ${result.data.token}")
 
                 }
                 is Resource.Error -> {
