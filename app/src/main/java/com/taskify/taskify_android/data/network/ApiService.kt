@@ -12,14 +12,13 @@ import retrofit2.http.POST
 
 interface ApiService {
 
-    @POST("api-auth/login/")
+    @POST("api/login")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
-    @POST("api-auth/logout/")
+    @POST("api/logout")
     suspend fun logout(@Header("Authorization") token: String): Response<LogoutResponse>
 
-    @POST("api-auth/register/")
+    @POST("api/register")
     suspend fun register(@Body request: RegisterRequest): Response<RegisterResponse>
     // TODO: Adapt according to the actual Django endpoint.
-
 }
