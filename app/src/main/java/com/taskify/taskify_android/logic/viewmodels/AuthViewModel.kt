@@ -41,6 +41,7 @@ class AuthViewModel(
                     Log.d("AuthViewModel", "Login successful. Token: ${result.data.token}")
 
                 }
+
                 is Resource.Error -> {
                     _authState.value = AuthUiState(
                         isLoading = false,
@@ -69,7 +70,13 @@ class AuthViewModel(
     }
 
     // ---------- REGISTER ----------
-    fun register(firstName: String, lastName: String, username: String, email: String, password: String) {
+    fun register(
+        firstName: String,
+        lastName: String,
+        username: String,
+        email: String,
+        password: String
+    ) {
         viewModelScope.launch {
             _authState.value = AuthUiState(isLoading = true)
             // TODO: Replace when register endpoint is ready
