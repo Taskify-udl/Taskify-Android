@@ -90,7 +90,7 @@ fun CategoryScreen(
         }
     }
 
-    // Popup za detalje ponude
+    // Popup for order details
     if (selectedOffer != null) {
         AlertDialog(
             onDismissRequest = { selectedOffer = null },

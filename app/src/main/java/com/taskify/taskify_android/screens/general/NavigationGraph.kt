@@ -45,7 +45,7 @@ fun NavigationGraph(navController: NavHostController) {
             val categoryName = backStackEntry.arguments?.getString("categoryName") ?: "Unknown"
             CategoryScreen(
                 categoryName = categoryName,
-                navController = navController  // <-- dodajemo navController
+                navController = navController  //
             )
         }
 
@@ -61,6 +61,11 @@ fun NavigationGraph(navController: NavHostController) {
                 navController = navController
             )
         }
+
+        composable("chat") {
+            ChatScreen(navController)
+        }
+
 
 
 

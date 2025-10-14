@@ -53,13 +53,13 @@ fun ProviderProfileScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            // Profilna slika + ime i profesija
+            // Profile picture and name
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
                         .size(80.dp)
                         .background(Color.Gray, RoundedCornerShape(40.dp))
-                        .clickable { /* kasnije možeš dodati navigaciju */ }
+                        .clickable { /* todo navigation */ }
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
@@ -70,7 +70,7 @@ fun ProviderProfileScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Kratka deskripcija
+            // Description
             Text(
                 text = "Experienced professional offering top-quality services. Reliable and punctual.",
                 color = Dark
@@ -78,7 +78,7 @@ fun ProviderProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Dugmad za Services i Reviews
+            // Buttons for Services i Reviews
             Row {
                 Button(
                     onClick = { selectedTab = "services" },
@@ -103,7 +103,7 @@ fun ProviderProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Dinamički sadržaj
+            // Dynamic content
             if (selectedTab == "services") {
                 Column {
                     services.forEach { service ->

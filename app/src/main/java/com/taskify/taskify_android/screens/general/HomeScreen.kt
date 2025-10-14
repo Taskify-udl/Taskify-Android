@@ -74,7 +74,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                     onSearchChange = { searchQuery = it },
                     navController = navController
                 )
-                1 -> FavoritesScreen()
+                1 -> FavoritesScreen(navController = navController)
                 2 -> BecomeProviderScreen()
                 3 -> OrdersScreen()
                 4 -> SettingsScreen()
@@ -114,8 +114,7 @@ fun BottomNavigationBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
     }
 }
 
-// OffersScreen sa popup
-// OffersScreen sa popup i navigacijom na category/offerDetail
+// OffersScreen with popup and navigation for category/offerDetail
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OffersScreenWithPopup(
@@ -209,7 +208,7 @@ fun OffersScreenWithPopup(
         }
     }
 
-    // Popup za detalje ponude
+    // Popup for detailed offers
     if (selectedOffer != null) {
         AlertDialog(
             onDismissRequest = { selectedOffer = null },
@@ -261,12 +260,86 @@ fun OfferCardItem(offerName: String, onClick: () -> Unit) {
 
 // FavoritesScreen
 @Composable
-fun FavoritesScreen() {
-    val favoriteProviders = listOf("HandyMan Pro","ElectricFix","QuickClean Team")
+fun FavoritesScreen(navController: NavController) {
+    // Lista providera: ime tima, ime osobe, profesija
+    val favoriteProviders = listOf(
+        Triple("HandyMan Pro", "John Doe", "Plumber"),
+        Triple("ElectricFix", "Jane Smith", "Electrician"),
+        Triple("QuickClean Team", "Mike Johnson", "Cleaner")
+    )
+
     Column(modifier = Modifier.padding(16.dp)) {
-        Text("Your Favorite Providers", fontWeight = FontWeight.Bold, color = PrimaryColor)
+        Text(
+            "Your Favorite Providers",
+            fontWeight = FontWeight.Bold,
+            color = PrimaryColor,
+            fontSize = 20.sp
+        )
         Spacer(modifier = Modifier.height(8.dp))
-        favoriteProviders.forEach { provider ->
+
+        favoriteProviders.forEach { (teamName, personName, profession) ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+                    .padding(vertical = 4.dp)
+                    .background(Color(0xFFD1E8FF), RoundedCornerShape(12.dp))
+                    .clickable {
+                        // Navigacija na profil providera
+                        navController.navigate("providerProfile/$personName")
+                    },
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(start = 16.dp)
+                ) {
+                    // Profilna slika
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .background(Color.Gray, RoundedCornerShape(30.dp))
+                    )
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column {
+                        Text(
+                            text = personName,
+                            color = TopGradientEnd,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            text = profession,
+                            color = Dark,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
+// OrdersScreen
+@Composable
+fun OrdersScreen() {
+    // Reservations simulation
+    val orders = listOf(
+        listOf("John Doe", "Plumber", "14.10.2025", "14:00"),
+        listOf("Jane Smith", "Electrician", "15.10.2025", "10:00"),
+        listOf("Mike Johnson", "Cleaner", "16.10.2025", "09:30")
+    )
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text("My Orders", fontWeight = FontWeight.Bold, color = PrimaryColor, fontSize = 20.sp)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        orders.forEach { order ->
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -274,34 +347,32 @@ fun FavoritesScreen() {
                     .padding(vertical = 4.dp)
                     .background(Color(0xFFD1E8FF), RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.CenterStart
-            ){
-                Text(provider, modifier = Modifier.padding(start = 16.dp), color = Dark, fontWeight = FontWeight.Medium)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp)
+                ) {
+                    // Profile picture
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .background(Color.Gray, RoundedCornerShape(30.dp))
+                    )
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column(verticalArrangement = Arrangement.Center) {
+                        Text(order[0], color = TopGradientEnd, fontWeight = FontWeight.Bold, fontSize = 16.sp) // Provider
+                        Text(order[1], color = Dark, fontWeight = FontWeight.Medium, fontSize = 14.sp) // Profession
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Date: ${order[2]} • Time: ${order[3]}", color = Dark.copy(alpha = 0.8f), fontSize = 13.sp)
+                    }
+                }
             }
         }
     }
 }
 
-// OrdersScreen
-@Composable
-fun OrdersScreen() {
-    val orders = listOf("14.10.2025 – 14:00 — Vodoinstalater dolazi","15.10.2025 – 10:00 — ElectricFix dolazi")
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text("My Orders", fontWeight = FontWeight.Bold, color = PrimaryColor)
-        Spacer(modifier = Modifier.height(8.dp))
-        orders.forEach { order ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-                    .padding(vertical = 4.dp)
-                    .background(Color(0xFFE8EAF6), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.CenterStart
-            ){
-                Text(order, modifier = Modifier.padding(start = 16.dp), color = Dark, fontWeight = FontWeight.Medium)
-            }
-        }
-    }
-}
 
 // Logo / Become Provider
 @Composable

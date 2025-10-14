@@ -130,7 +130,10 @@ fun OfferDetailScreen(
 
             // Contact / Book Button
             Button(
-                onClick = { /* TODO: Contact provider functionality */ },
+                onClick = {
+                    // Navigation for chat screen
+                    navController.navigate("chat")
+                },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = TopGradientEnd)
             ) {

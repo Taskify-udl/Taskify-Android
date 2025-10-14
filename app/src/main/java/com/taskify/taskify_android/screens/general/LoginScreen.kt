@@ -136,21 +136,6 @@ fun LoginScreen(
                     Text("Login")
                 }
 
-                // Novi button koji vodi na HomeScreen bez provjera
-                Button(
-                    onClick = {
-                        navController.navigate("homeScreen") {
-                            launchSingleTop = true
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp)
-                ) {
-                    Text("Test")
-                }
-
-
                 // Error message
                 val errorToShow = localError.ifEmpty { loginState.error }
                 errorToShow?.let { errorMsg ->
