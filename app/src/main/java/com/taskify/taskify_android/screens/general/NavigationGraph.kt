@@ -36,5 +36,36 @@ fun NavigationGraph(navController: NavHostController) {
         composable("homeScreen") {
             HomeScreen(navController, authViewModel)
         }
+
+        composable("chat") {
+            ChatScreen(navController)
+        }
+
+        composable("category/{categoryName}") { backStackEntry ->
+            val categoryName = backStackEntry.arguments?.getString("categoryName") ?: "Unknown"
+            CategoryScreen(
+                categoryName = categoryName,
+                navController = navController  // <-- dodajemo navController
+            )
+        }
+
+        composable("offerDetail/{offerName}") { backStackEntry ->
+            val offerName = backStackEntry.arguments?.getString("offerName") ?: "Unknown"
+            OfferDetailScreen(offerName = offerName, navController = navController)
+        }
+
+        composable("providerProfile/{providerName}") { backStackEntry ->
+            val providerName = backStackEntry.arguments?.getString("providerName") ?: "Unknown"
+            ProviderProfileScreen(
+                providerName = providerName,
+                navController = navController
+            )
+        }
+
+
+
+
+
+
     }
 }
