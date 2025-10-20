@@ -1,5 +1,6 @@
 package com.taskify.taskify_android.screens.general
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -16,9 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.taskify.taskify_android.R
 import com.taskify.taskify_android.logic.viewmodels.AuthViewModel
 import com.taskify.taskify_android.ui.theme.Dark
 import com.taskify.taskify_android.ui.theme.PrimaryColor
@@ -27,10 +31,12 @@ import com.taskify.taskify_android.ui.theme.TopGradientEnd
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
-    var selectedTab by remember { mutableStateOf(0) }
+    val user by authViewModel.currentUser.collectAsState()
+    val context = LocalContext.current
+    var selectedTab by remember { mutableIntStateOf(0) }
     var searchQuery by remember { mutableStateOf("") }
 
-    val tabs = listOf("Offers", "Favorites", "Logo", "Orders", "Settings")
+    val tabs = listOf("Offers", "Favorites", "Taskify", "Orders", "Settings")
 
     Scaffold(
         topBar = {
@@ -295,10 +301,10 @@ fun FavoritesScreen(navController: NavController) {
                     modifier = Modifier.padding(start = 16.dp)
                 ) {
                     // Profilna slika
-                    Box(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .background(Color.Gray, RoundedCornerShape(30.dp))
+                    Image(
+                        painter = painterResource(id = R.drawable.usericon),
+                        contentDescription = "User Logo",
+                        modifier = Modifier.size(80.dp)
                     )
 
                     Spacer(modifier = Modifier.width(12.dp))
@@ -353,10 +359,10 @@ fun OrdersScreen() {
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp)
                 ) {
                     // Profile picture
-                    Box(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .background(Color.Gray, RoundedCornerShape(30.dp))
+                    Image(
+                        painter = painterResource(id = R.drawable.usericon),
+                        contentDescription = "User Logo",
+                        modifier = Modifier.size(80.dp)
                     )
 
                     Spacer(modifier = Modifier.width(12.dp))
@@ -387,10 +393,10 @@ fun BecomeProviderScreen() {
 fun SettingsScreen() {
     Column(modifier = Modifier.padding(16.dp)) {
         // Profilna slika
-        Box(modifier = Modifier
-            .size(80.dp)
-            .background(Color.Gray, RoundedCornerShape(40.dp))
-            .align(Alignment.CenterHorizontally)
+        Image(
+            painter = painterResource(id = R.drawable.usericon),
+            contentDescription = "User Logo",
+            modifier = Modifier.size(80.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
 

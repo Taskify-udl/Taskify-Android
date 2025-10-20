@@ -1,5 +1,6 @@
 package com.taskify.taskify_android.screens.general
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -16,9 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.taskify.taskify_android.R
 import com.taskify.taskify_android.logic.viewmodels.AuthViewModel
 import com.taskify.taskify_android.ui.theme.Dark
 import com.taskify.taskify_android.ui.theme.PrimaryColor
@@ -59,10 +62,11 @@ fun OfferDetailScreen(
             // Provider Name sa profilnom slikom
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // Profilna slika
-                Box(
+                Image(
+                    painter = painterResource(id = R.drawable.usericon),
+                    contentDescription = "User Logo",
                     modifier = Modifier
                         .size(80.dp)
-                        .background(Color.Gray, RoundedCornerShape(40.dp))
                         .clickable {
                             navController.navigate("providerProfile/John Doe")
                         }
