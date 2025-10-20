@@ -1,5 +1,6 @@
 package com.taskify.taskify_android.screens.general
 
+import android.util.Log
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -16,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.IntOffset
@@ -23,13 +25,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.taskify.taskify_android.data.models.entities.Customer
+import com.taskify.taskify_android.data.models.entities.Provider
 import com.taskify.taskify_android.data.models.entities.Role
 import com.taskify.taskify_android.logic.validateRegister
 import com.taskify.taskify_android.logic.viewmodels.AuthUiState
 import com.taskify.taskify_android.logic.viewmodels.AuthViewModel
 import kotlinx.coroutines.delay
-import kotlin.math.roundToInt
-import kotlin.random.Random
 
 enum class RegisterStep {
     ROLE_SELECTION,
@@ -67,6 +69,7 @@ fun RegisterScreen(
 
     // Local validation error
     var localError by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -105,11 +108,20 @@ fun RegisterScreen(
                         onUsernameChange = { username = it },
                         onEmailChange = { email = it },
                         onPasswordChange = { password = it },
-                        onValidate = { localError = validateRegister(firstName, lastName, email, password) },
+                        onValidate = {
+                            localError = validateRegister(firstName, lastName, email, password)
+                        },
                         onNext = {
                             val error = validateRegister(firstName, lastName, email, password)
                             if (error.isEmpty()) {
-                                authViewModel.register(firstName, lastName, username, email, password)
+                                authViewModel.register(
+                                    firstName,
+                                    lastName,
+                                    username,
+                                    email,
+                                    password,
+                                    context
+                                )
                                 step = RegisterStep.VERIFY_CODE
                             } else {
                                 localError = error
@@ -121,9 +133,34 @@ fun RegisterScreen(
                         verificationCode = verificationCode,
                         onCodeChange = { verificationCode = it },
                         onVerifySuccess = {
+                            val now = java.time.LocalDateTime.now()
+                            val apiUser = registerState.user
                             when (role) {
-                                Role.CUSTOMER -> navigateToHome(navController)
-                                Role.PROVIDER -> step = RegisterStep.PROVIDER_SERVICE
+                                Role.CUSTOMER -> {
+                                    val customer = Customer(
+                                        id = apiUser?.id?.toLong() ?: 0L, // ID de l'API
+                                        firstName = firstName,
+                                        lastName = lastName,
+                                        username = username,
+                                        email = email,
+                                        password = password,
+                                        phoneNumber = "",
+                                        profilePic = null,
+                                        createdAt = now,
+                                        updatedAt = now,
+                                        address = "",
+                                        city = "",
+                                        country = "",
+                                        zipCode = ""
+                                    )
+                                    authViewModel.saveLocalUser(customer)
+                                    navigateToHome(navController)
+                                }
+
+                                Role.PROVIDER -> {
+                                    step = RegisterStep.PROVIDER_SERVICE
+                                }
+
                                 else -> {}
                             }
                         }
@@ -138,7 +175,46 @@ fun RegisterScreen(
                         onCategoryChange = { serviceCategory = it },
                         onDescriptionChange = { serviceDescription = it },
                         onPriceChange = { servicePrice = it },
-                        onCreate = { navigateToHome(navController) }
+                        onCreate = {
+                            val now = java.time.LocalDateTime.now()
+
+                            authViewModel.createService(
+                                title = serviceTitle,
+                                category = serviceCategory,
+                                description = serviceDescription,
+                                price = servicePrice.toDouble(),
+                                context = context,
+                                onSuccess = { apiService ->
+                                    val provider = Provider(
+                                        id = registerState.user?.id?.toLong() ?: 0L,   // 👈 usa el id real
+                                        firstName = firstName,
+                                        lastName = lastName,
+                                        username = username,
+                                        email = email,
+                                        password = password,
+                                        phoneNumber = "",
+                                        profilePic = null,
+                                        createdAt = now,
+                                        updatedAt = now,
+                                        address = "",
+                                        city = "",
+                                        country = "",
+                                        zipCode = "",
+                                        bio = "",
+                                        experienceYears = 0,
+                                        averageRating = 0.0,
+                                        isVerified = false,
+                                        services = listOf(apiService)
+                                    )
+                                    authViewModel.saveLocalUser(provider)
+                                    navigateToHome(navController)
+                                },
+                                onError = { error ->
+                                    Log.e("Register", "Failed to create service: $error")
+                                }
+                            )
+
+                        }
                     )
                 }
 
@@ -242,7 +318,9 @@ fun StepCredentials(
 
     Button(
         onClick = onNext,
-        modifier = Modifier.fillMaxWidth().height(50.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(50.dp),
         enabled = isFormValid && !registerState.isLoading
     ) { Text("Register") }
 
@@ -283,7 +361,9 @@ fun StepVerifyCode(
 
     Button(
         onClick = { isVerifying = true },
-        modifier = Modifier.fillMaxWidth().height(50.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(50.dp),
         enabled = verificationCode.isNotBlank() && !isVerifying
     ) { Text(if (isVerifying) "Verifying..." else "Verify") }
 
@@ -326,7 +406,9 @@ fun StepProviderService(
             serviceDescription.isNotBlank() && servicePrice.isNotBlank()
 
     Button(
-        onClick = onCreate, modifier = Modifier.fillMaxWidth().height(50.dp),
+        onClick = onCreate, modifier = Modifier
+            .fillMaxWidth()
+            .height(50.dp),
         enabled = isFormValid
     ) { Text("Create") }
 }
