@@ -19,3 +19,11 @@ interface User {
 enum class Role {
     ADMIN, CUSTOMER, PROVIDER
 }
+
+enum class ProviderEnum {
+    FREELANCER, ENTERPRISE, WORKER
+}
+
+
+// Worker sol te acces als cpontractes de la empresa
+// Enterpr
