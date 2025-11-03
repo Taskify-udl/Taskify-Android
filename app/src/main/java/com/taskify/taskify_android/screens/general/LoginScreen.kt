@@ -1,18 +1,40 @@
 package com.taskify.taskify_android.screens.general
 
+import android.annotation.SuppressLint
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
@@ -37,16 +59,29 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.material3.Icon
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.taskify.taskify_android.logic.validateLogin
-import com.taskify.taskify_android.ui.theme.Dark
-import com.taskify.taskify_android.ui.theme.TopGradientEnd
+import com.taskify.taskify_android.ui.theme.BgSecondary
+import com.taskify.taskify_android.ui.theme.BgWhite
+import com.taskify.taskify_android.ui.theme.BrandBlue
+import com.taskify.taskify_android.ui.theme.TextDark
+import com.taskify.taskify_android.ui.theme.TextGray
 
+@SuppressLint("ConfigurationScreenWidthHeight")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
@@ -56,12 +91,11 @@ fun LoginScreen(
     val loginState by authViewModel.authState.collectAsState()
     val context = LocalContext.current
 
-    // Vars per inputs
-    var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var localError by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
 
-    // Navigate to home screen if login is successful
     LaunchedEffect(loginState.isSuccess) {
         if (loginState.isSuccess) {
             navController.navigate("homeScreen") {
@@ -71,117 +105,225 @@ fun LoginScreen(
         }
     }
 
+    // 🔁 Animació del fons diagonal
+    val infiniteTransition = rememberInfiniteTransition(label = "bgAnim")
+    val progress by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(11000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "progressAnim"
+    )
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
+    // 📏 Obtenim amplada i altura de la pantalla
+    val configuration = LocalConfiguration.current
+    val density = LocalDensity.current
+    val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
+    val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
+
+    Scaffold(containerColor = Color.Transparent) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 24.dp),
-            contentAlignment = Alignment.Center
+                .padding(paddingValues)
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            // 🔹 Degradats diagonals animats
+            val startA = Offset(screenWidthPx * (1f - progress), 0f)
+            val endA = Offset(0f, screenHeightPx * progress)
+            val startB = Offset(0f, screenHeightPx * (1f - progress))
+            val endB = Offset(screenWidthPx * progress, screenHeightPx)
+
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        brush = Brush.linearGradient(
+                            listOf(
+                                BgWhite,
+                                BgSecondary,
+                                BrandBlue.copy(alpha = 0.12f)
+                            ),
+                            start = startA,
+                            end = endA
+                        )
+                    )
+            )
+
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        brush = Brush.linearGradient(
+                            listOf(
+                                BrandBlue.copy(alpha = 0.25f),
+                                TextGray.copy(alpha = 0.15f)
+                            ),
+                            start = startB,
+                            end = endB
+                        )
+                    )
+            )
+
+            // 💠 Card translúcida principal
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.85f)
+                    .align(Alignment.Center)
+                    .background(
+                        color = Color.White.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = 0.25f),
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                    .padding(horizontal = 28.dp, vertical = 36.dp)
             ) {
-                // Títol
-                Text(
-                    text = "Welcome to Taskify",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = PrimaryColor,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Username
-                OutlinedTextField(
-                    value = username,
-                    onValueChange = { username = it },
-                    label = { Text("Username") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // Password
-                PasswordField(
-                    password = password,
-                    onPasswordChange = { password = it }
-                )
-
-                // Login button
-                Button(
-                    onClick = {
-                        // Reset errors
-                        localError = ""
-
-                        // Validate inputs
-                        val validationError = validateLogin(password)
-                        if (validationError.isNotEmpty()) {
-                            localError = validationError
-                        } else {
-                            authViewModel.login(username, password, context = context)
-                            // TODO: Navigate to home screen
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    enabled = !loginState.isLoading
-                ) {
-                    Text("Login")
-                }
-
-                // Error message
-                val errorToShow = localError.ifEmpty { loginState.error }
-                errorToShow?.let { errorMsg ->
-                    Text(
-                        text = errorMsg,
-                        color = MaterialTheme.colorScheme.error,
-
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Register button
-                Row(
-                    modifier = Modifier.padding(bottom = 32.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = "Don't have an account?",
-                        fontSize = 14.sp,
-                        color = Dark,
-                        textDecoration = TextDecoration.Underline
+                        text = "Welcome to Taskify",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextDark,
+                        textAlign = TextAlign.Center
                     )
-                    TextButton(onClick = {
-                        navController.navigate("register") {
-                            popUpTo("login") {
-                                inclusive = true
+                    Text(
+                        text = "Boost your productivity with ease",
+                        fontSize = 16.sp,
+                        color = TextGray,
+                        textAlign = TextAlign.Center
+                    )
+
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email") },
+                        placeholder = { Text("you@email.com") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Password") },
+                        singleLine = true,
+                        visualTransformation =
+                            if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            val icon =
+                                if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(imageVector = icon, contentDescription = null)
                             }
-                            launchSingleTop = true
-                        }
-                    }) {
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    TextButton(onClick = { /* TODO: navigate to recovery */ }) {
                         Text(
-                            text = "Create Account",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TopGradientEnd,
-                            textDecoration = TextDecoration.Underline
+                            text = "Forgot your password?",
+                            style = MaterialTheme.typography.labelSmall,
+                            textDecoration = TextDecoration.Underline,
+                            color = TextGray
                         )
                     }
-                }
 
-                // Loading
-                if (loginState.isLoading) {
-                    CircularProgressIndicator()
+                    // 🔹 Botó Login
+                    AnimatedButton(
+                        text = "Log In",
+                        onClick = {
+                            localError = ""
+                            val validationError = validateLogin(email, password)
+                            if (validationError.isNotEmpty()) {
+                                localError = validationError
+                            } else {
+                                authViewModel.login(email, password, context)
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                    )
+
+                    val errorToShow = localError.ifEmpty { loginState.error }
+                    errorToShow?.let {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Don't have an account?", fontSize = 14.sp, color = TextGray)
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = "Register",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BrandBlue,
+                            modifier = Modifier.clickable {
+                                navController.navigate("register") {
+                                    popUpTo("login") { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            }
+                        )
+                    }
+
+                    if (loginState.isLoading) {
+                        Spacer(Modifier.height(8.dp))
+                        CircularProgressIndicator()
+                    }
                 }
             }
+
+            // 🔙 Mini card de fletxa enrere — adaptativa i visible
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .offset(y = configuration.screenHeightDp.dp * 0.38f)
+                    .width(configuration.screenWidthDp.dp * 0.22f)
+                    .height(configuration.screenHeightDp.dp * 0.07f)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(
+                        color = Color.White.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = 0.25f),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .clickable {
+                        navController.navigate("authScreen") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Go back",
+                    tint = Color.White.copy(alpha = 0.9f)
+                )
+            }
+
+
+
         }
     }
 }
@@ -213,3 +355,4 @@ fun PasswordField(password: String, onPasswordChange: (String) -> Unit) {
         modifier = Modifier.fillMaxWidth()
     )
 }
+

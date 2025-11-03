@@ -3,8 +3,10 @@ package com.taskify.taskify_android.logic
 import android.util.Patterns
 
 // Function to validate login
-fun validateLogin(password: String): String {
+fun validateLogin(email: String, password: String): String {
     return when {
+        email.isBlank() -> "Email cannot be empty"
+        !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> "Invalid email"
         password.isBlank() -> "Password cannot be empty"
         password.length < 8 -> "Incorrect password"
         else -> ""
