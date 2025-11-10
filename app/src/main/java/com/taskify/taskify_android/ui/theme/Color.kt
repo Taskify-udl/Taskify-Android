@@ -28,3 +28,16 @@ val White = Color(0xFFFFFFFF)
 // Gradients (optional, replacing the old ones)
 val TopGradientStart = PrimaryColor
 val TopGradientEnd = SecondaryColor
+
+
+// Web Colors
+val BgWhite = Color(0xFFFFFFFF)
+val BgSecondary = Color(0xFFF0F0F0)
+val BorderLight = Color(0xFFE5E5E5)
+val TextDark = Color(0xFF1A1A1A)
+val TextGray = Color(0xFF555555)
+val BrandBlue = Color(0xFF0D99FF)
+
+// 🖤 Tons moderns afegits per contrast
+val CardDark = Color(0xFF1E1E1E)
+val CardGray = Color(0xFF2C2C2C)
