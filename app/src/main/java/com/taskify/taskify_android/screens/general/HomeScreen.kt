@@ -28,7 +28,6 @@ import androidx.navigation.NavController
 import com.taskify.taskify_android.R
 import com.taskify.taskify_android.logic.viewmodels.AuthViewModel
 import com.taskify.taskify_android.ui.theme.Dark
-import com.taskify.taskify_android.ui.theme.PrimaryColor
 import com.taskify.taskify_android.ui.theme.TopGradientEnd
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.infiniteRepeatable
@@ -54,7 +53,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
 
     val tabs = listOf("Offers", "Favorites", "Taskify", "Orders", "Settings")
 
-    // 🔁 Pozadinska animacija s blagim gradijentom
+    // 🔁 Animation
     val infiniteTransition = rememberInfiniteTransition(label = "homeBgAnim")
     val progress by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -78,7 +77,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
         val start = Offset(widthF * (1f - progress), 0f)
         val end = Offset(0f, heightF * progress)
 
-        // Gradient background
+        // 🌈 Gradient background
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -95,7 +94,34 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                 )
         )
 
-        // 🔹 Uklonjen bijeli staklasti Box (ovaj dio je čist)
+        // 🔔 Notification ikona (gornji lijevi ugao)
+        IconButton(
+            onClick = { /* TODO: navigacija na NotificationsScreen() */ },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(start = 10.dp, top = 45.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Notifications,
+                contentDescription = "Notifications",
+                tint = BrandBlue
+            )
+        }
+
+        IconButton(
+            onClick = {/* TODO Chat function*/},
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(start = 10.dp, top = 45.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Chat,
+                contentDescription = "Chat",
+                tint = BrandBlue
+            )
+        }
+
+        // 🔹 Glavni Scaffold
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
@@ -106,17 +132,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                             fontWeight = FontWeight.Bold
                         )
                     },
-                    actions = {
-                        if (selectedTab == 0) {
-                            IconButton(onClick = { navController.navigate("chat") }) {
-                                Icon(
-                                    imageVector = Icons.Default.Chat,
-                                    contentDescription = "Chat",
-                                    tint = BrandBlue
-                                )
-                            }
-                        }
-                    },
+
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = Color.Transparent
                     )
@@ -233,7 +249,7 @@ fun OffersScreenWithPopup(
                 Box(
                     modifier = Modifier
                         .size(70.dp)
-                        .background(LightGray.copy(alpha = 0.15f), CircleShape),
+                        .background(BrandBlue.copy(alpha = 0.15f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -535,59 +551,144 @@ fun OfferCardItem(offerName: String, onClick: () -> Unit) {
 // FavoritesScreen
 @Composable
 fun FavoritesScreen(navController: NavController) {
-    // Lista providera: ime tima, ime osobe, profesija
-    val favoriteProviders = listOf(
-        Triple("HandyMan Pro", "John Doe", "Plumber"),
-        Triple("ElectricFix", "Jane Smith", "Electrician"),
-        Triple("QuickClean Team", "Mike Johnson", "Cleaner")
-    )
-
     Column(modifier = Modifier.padding(16.dp)) {
-        Text(
-            "Your Favorite Providers",
-            fontWeight = FontWeight.Bold,
-            color = PrimaryColor,
-            fontSize = 20.sp
-        )
+
         Spacer(modifier = Modifier.height(8.dp))
 
-        favoriteProviders.forEach { (teamName, personName, profession) ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-                    .padding(vertical = 4.dp)
-                    .background(Color(0xFFD1E8FF), RoundedCornerShape(12.dp))
-                    .clickable {
-                        // Navigacija na profil providera
-                        navController.navigate("providerProfile/$personName")
-                    },
-                contentAlignment = Alignment.CenterStart
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(start = 16.dp)
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            // 🧰 HandyMan Pro
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { navController.navigate("providerProfile/John Doe") }
                 ) {
-                    // Profilna slika
                     Image(
-                        painter = painterResource(id = R.drawable.usericon),
-                        contentDescription = "User Logo",
-                        modifier = Modifier.size(80.dp)
+                        painter = painterResource(id = R.drawable.worker3),
+                        contentDescription = "John Doe - HandyMan Pro",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
                     )
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Column {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                                )
+                            )
+                    )
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp)
+                    ) {
                         Text(
-                            text = personName,
-                            color = TopGradientEnd,
+                            text = "John Doe",
+                            color = Color.White,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
+                            fontSize = 18.sp
                         )
                         Text(
-                            text = profession,
-                            color = Dark,
-                            fontWeight = FontWeight.Medium,
+                            text = "Plumber • HandyMan Pro",
+                            color = Color.White.copy(alpha = 0.8f),
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+
+            // ⚡ ElectricFix
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { navController.navigate("providerProfile/Jane Smith") }
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.worker4),
+                        contentDescription = "Jane Smith - ElectricFix",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                                )
+                            )
+                    )
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Jane Smith",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                        Text(
+                            text = "Electrician • ElectricFix",
+                            color = Color.White.copy(alpha = 0.8f),
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+
+            // 🧼 QuickClean Team
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { navController.navigate("providerProfile/Mike Johnson") }
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.worker1),
+                        contentDescription = "Mike Johnson - QuickClean Team",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                                )
+                            )
+                    )
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Mike Johnson",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                        Text(
+                            text = "Cleaner • QuickClean Team",
+                            color = Color.White.copy(alpha = 0.8f),
                             fontSize = 14.sp
                         )
                     }
@@ -598,55 +699,147 @@ fun FavoritesScreen(navController: NavController) {
 }
 
 
+// 🔹 Helper struktura jer Triple nema četvrti element
+data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
+
+
 
 // OrdersScreen
 @Composable
 fun OrdersScreen() {
-    // Reservations simulation
-    val orders = listOf(
-        listOf("John Doe", "Plumber", "14.10.2025", "14:00"),
-        listOf("Jane Smith", "Electrician", "15.10.2025", "10:00"),
-        listOf("Mike Johnson", "Cleaner", "16.10.2025", "09:30")
-    )
-
     Column(modifier = Modifier.padding(16.dp)) {
-        Text("My Orders", fontWeight = FontWeight.Bold, color = PrimaryColor, fontSize = 20.sp)
+        Text(
+            text = "My Orders",
+            fontWeight = FontWeight.Bold,
+            color = TopGradientEnd,
+            fontSize = 20.sp
+        )
         Spacer(modifier = Modifier.height(8.dp))
 
-        orders.forEach { order ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-                    .padding(vertical = 4.dp)
-                    .background(Color(0xFFD1E8FF), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp)
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            // 🔧 John Doe - Plumber
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFFF1F6FA))
+                        .border(1.dp, Color(0xFFD1E8FF), RoundedCornerShape(16.dp))
+                        .padding(16.dp)
                 ) {
-                    // Profile picture
-                    Image(
-                        painter = painterResource(id = R.drawable.usericon),
-                        contentDescription = "User Logo",
-                        modifier = Modifier.size(80.dp)
-                    )
+                    Column {
+                        Text(
+                            text = "John Doe",
+                            color = TopGradientEnd,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                        Text(
+                            text = "Plumber",
+                            color = Dark.copy(alpha = 0.9f),
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Date: 14.10.2025",
+                            color = Dark.copy(alpha = 0.8f),
+                            fontSize = 13.sp
+                        )
+                        Text(
+                            text = "Time: 14:00",
+                            color = Dark.copy(alpha = 0.8f),
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            }
 
-                    Spacer(modifier = Modifier.width(12.dp))
+            // ⚡ Jane Smith - Electrician
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFFF1F6FA))
+                        .border(1.dp, Color(0xFFD1E8FF), RoundedCornerShape(16.dp))
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "Jane Smith",
+                            color = TopGradientEnd,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                        Text(
+                            text = "Electrician",
+                            color = Dark.copy(alpha = 0.9f),
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Date: 15.10.2025",
+                            color = Dark.copy(alpha = 0.8f),
+                            fontSize = 13.sp
+                        )
+                        Text(
+                            text = "Time: 10:00",
+                            color = Dark.copy(alpha = 0.8f),
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            }
 
-                    Column(verticalArrangement = Arrangement.Center) {
-                        Text(order[0], color = TopGradientEnd, fontWeight = FontWeight.Bold, fontSize = 16.sp) // Provider
-                        Text(order[1], color = Dark, fontWeight = FontWeight.Medium, fontSize = 14.sp) // Profession
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text("Date: ${order[2]} • Time: ${order[3]}", color = Dark.copy(alpha = 0.8f), fontSize = 13.sp)
+            // 🧼 Mike Johnson - Cleaner
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFFF1F6FA))
+                        .border(1.dp, Color(0xFFD1E8FF), RoundedCornerShape(16.dp))
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "Mike Johnson",
+                            color = TopGradientEnd,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                        Text(
+                            text = "Cleaner",
+                            color = Dark.copy(alpha = 0.9f),
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Date: 16.10.2025",
+                            color = Dark.copy(alpha = 0.8f),
+                            fontSize = 13.sp
+                        )
+                        Text(
+                            text = "Time: 09:30",
+                            color = Dark.copy(alpha = 0.8f),
+                            fontSize = 13.sp
+                        )
                     }
                 }
             }
         }
     }
 }
-
 
 // Logo / Become Provider
 @Composable
@@ -659,27 +852,101 @@ fun BecomeProviderScreen() {
 // Settings
 @Composable
 fun SettingsScreen() {
-    Column(modifier = Modifier.padding(16.dp)) {
-        // Profilna slika
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // 👤 Profilna slika centrirana
         Image(
-            painter = painterResource(id = R.drawable.usericon),
+            painter = painterResource(id = R.drawable.profilepic),
             contentDescription = "User Logo",
-            modifier = Modifier.size(80.dp)
+            modifier = Modifier
+                .size(100.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFE7F1FB))
+                .border(2.dp, Color(0xFFD1E8FF), CircleShape)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "Account Settings",
+            fontWeight = FontWeight.Bold,
+            color = TopGradientEnd,
+            fontSize = 20.sp
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        val options = listOf("Profile Info","Security","Privacy","Become a provider")
-        options.forEach { opt ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp)
-                    .padding(vertical = 4.dp)
-                    .background(Color(0xFFD1E8FF), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.CenterStart
-            ){
-                Text(opt, modifier = Modifier.padding(start = 16.dp), color = Dark, fontWeight = FontWeight.Medium)
+        // 🔹 Opcije
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // ⚙️ Settings
+            item {
+                SettingItem("Settings") {
+                    // navController.navigate("settingsDetail") // primjer
+                }
+            }
+
+            // 👤 Profile Info
+            item {
+                SettingItem("Profile Info") {
+                    // navController.navigate("profileInfo")
+                }
+            }
+
+            // 🔐 Security
+            item {
+                SettingItem("Security") {
+                    // navController.navigate("security")
+                }
+            }
+
+            // 📊 Dashboard
+            item {
+                SettingItem("Dashboard") {
+                    // navController.navigate("dashboard")
+                }
+            }
+
+            // 🚪 Logout
+            item {
+                SettingItem("Logout", highlight = true) {
+                    // handle logout logic
+                }
             }
         }
     }
 }
+
+// 🔹 Komponenta za svaku stavku u listi
+@Composable
+fun SettingItem(title: String, highlight: Boolean = false, onClick: () -> Unit = {}) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (highlight) Color(0xFFFFEDED) else Color(0xFFF1F6FA))
+            .border(
+                1.dp,
+                if (highlight) Color(0xFFFFC5C5) else Color(0xFFD1E8FF),
+                RoundedCornerShape(16.dp)
+            )
+            .clickable { onClick() }
+            .padding(start = 20.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Text(
+            text = title,
+            color = if (highlight) Color(0xFFD32F2F) else Dark,
+            fontWeight = if (highlight) FontWeight.Bold else FontWeight.Medium,
+            fontSize = 16.sp
+        )
+    }
+}
+
