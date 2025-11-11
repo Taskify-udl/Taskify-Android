@@ -8,9 +8,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.taskify.taskify_android.data.models.auth.AuthPreferences
 import com.taskify.taskify_android.data.models.auth.UserResponse
-import com.taskify.taskify_android.data.models.entities.OrderService
+import com.taskify.taskify_android.data.models.entities.Customer
+import com.taskify.taskify_android.data.models.entities.Provider
 import com.taskify.taskify_android.data.models.entities.ProviderService
+import com.taskify.taskify_android.data.models.entities.Role
 import com.taskify.taskify_android.data.models.entities.User
+import com.taskify.taskify_android.data.models.entities.UserDraft
 import com.taskify.taskify_android.data.repository.AuthRepository
 import com.taskify.taskify_android.data.repository.Resource
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,13 +48,93 @@ class AuthViewModel(
 
             when (val result = repository.login(username, password)) {
                 is Resource.Success -> {
-                    AuthPreferences.saveToken(context, result.data.token)
+                    val loginResponse = result.data
+                    AuthPreferences.saveToken(context, loginResponse.token)
+
+                    // 🔍 Obtenim el role
+                    val roleString = loginResponse.user.role.uppercase()
+                    val role = Role.valueOf(roleString)
+
+                    val now = java.time.LocalDateTime.now()
+
+                    // 🔧 Creem el tipus d'usuari segons el role
+                    val user: User = when (role) {
+                        Role.FREELANCER,
+                        Role.COMPANY_ADMIN,
+                        Role.COMPANY_WORKER,
+                        Role.PROVIDER -> Provider(
+                            id = loginResponse.user.id.toLong(),
+                            fullName = loginResponse.user.username,
+                            username = loginResponse.user.username,
+                            email = loginResponse.user.email,
+                            password = "",
+                            phoneNumber = "",
+                            profilePic = null,
+                            role = role,
+                            createdAt = now,
+                            updatedAt = now,
+                            address = "",
+                            city = "",
+                            country = "",
+                            zipCode = "",
+                            bio = "",
+                            experienceYears = 0,
+                            averageRating = 0.0,
+                            isVerified = false,
+                            services = emptyList()
+                        )
+
+                        Role.CUSTOMER -> Customer(
+                            id = loginResponse.user.id.toLong(),
+                            fullName = loginResponse.user.username,
+                            username = loginResponse.user.username,
+                            email = loginResponse.user.email,
+                            password = "",
+                            phoneNumber = "",
+                            profilePic = null,
+                            role = role,
+                            createdAt = now,
+                            updatedAt = now,
+                            address = "",
+                            city = "",
+                            country = "",
+                            zipCode = ""
+                        )
+
+                        Role.ADMIN -> {
+                            // 🔒 De moment, no gestionem ADMIN
+                            Log.w("AuthViewModel", "⚠️ Usuari ADMIN detectat, no gestionat.")
+                            Customer(
+                                id = loginResponse.user.id.toLong(),
+                                fullName = loginResponse.user.username,
+                                username = loginResponse.user.username,
+                                email = loginResponse.user.email,
+                                password = "",
+                                phoneNumber = "",
+                                profilePic = null,
+                                role = role,
+                                createdAt = now,
+                                updatedAt = now,
+                                address = "",
+                                city = "",
+                                country = "",
+                                zipCode = ""
+                            )
+                        }
+                    }
+
+                    // 💾 Guardem l’usuari localment
+                    saveLocalUser(user)
+
+                    // ✅ Actualitzem estat d'autenticació
                     _authState.value = AuthUiState(
                         isSuccess = true,
-                        token = result.data.token // LoginResponse té camp token
+                        token = loginResponse.token,
+                        user = loginResponse.user
                     )
-                    Log.d("AuthViewModel", "Login successful. Token: ${result.data.token}")
 
+                    Log.d("AuthViewModel", "✅ Login successful. Token: ${loginResponse.token}")
+                    Log.d("AuthViewModel", "✅ CurrentUser saved: $user")
                 }
 
                 is Resource.Error -> {
@@ -59,6 +142,7 @@ class AuthViewModel(
                         isLoading = false,
                         error = result.message
                     )
+                    Log.e("AuthViewModel", "❌ Login error: ${result.message}")
                 }
 
                 is Resource.Loading<*> -> {}
@@ -85,32 +169,128 @@ class AuthViewModel(
 
     // ---------- REGISTER ----------
     fun register(
-        firstName: String,
-        lastName: String,
-        username: String,
-        email: String,
-        password: String,
+        userDraft: UserDraft,
         context: Context
     ) {
         viewModelScope.launch {
             _authState.value = AuthUiState(isLoading = true)
-            val result =
-                repository.register(firstName, lastName, username, email, password, context)
-            _authState.value = when (result) {
-                is Resource.Success -> AuthUiState(
-                    user = result.data.user,
-                    token = result.data.token
-                )
 
-                is Resource.Error -> AuthUiState(error = result.message)
-                is Resource.Loading<*> -> TODO()
+            val result = repository.register(userDraft, context)
+
+            when (result) {
+                is Resource.Success -> {
+                    val registerResponse = result.data
+                    AuthPreferences.saveToken(context, registerResponse.token)
+
+                    // 🔍 Obtenim el role retornat pel backend
+                    val roleString = registerResponse.user.role.uppercase()
+                    val role = Role.valueOf(roleString)
+
+                    val now = java.time.LocalDateTime.now()
+
+                    // 🔧 Creem el tipus d'usuari segons el role
+                    val user: User = when (role) {
+                        Role.FREELANCER,
+                        Role.COMPANY_ADMIN,
+                        Role.COMPANY_WORKER,
+                        Role.PROVIDER -> Provider(
+                            id = registerResponse.user.id.toLong(),
+                            fullName = registerResponse.user.username,
+                            username = registerResponse.user.username,
+                            email = registerResponse.user.email,
+                            password = "",
+                            phoneNumber = "",
+                            profilePic = null,
+                            role = role,
+                            createdAt = now,
+                            updatedAt = now,
+                            address = "",
+                            city = "",
+                            country = "",
+                            zipCode = "",
+                            bio = "",
+                            experienceYears = 0,
+                            averageRating = 0.0,
+                            isVerified = false,
+                            services = emptyList()
+                        )
+
+                        Role.CUSTOMER -> Customer(
+                            id = registerResponse.user.id.toLong(),
+                            fullName = registerResponse.user.username,
+                            username = registerResponse.user.username,
+                            email = registerResponse.user.email,
+                            password = "",
+                            phoneNumber = "",
+                            profilePic = null,
+                            role = role,
+                            createdAt = now,
+                            updatedAt = now,
+                            address = "",
+                            city = "",
+                            country = "",
+                            zipCode = ""
+                        )
+
+                        Role.ADMIN -> {
+                            Log.w("AuthViewModel", "⚠️ Usuari ADMIN detectat al registre, no gestionat.")
+                            Customer(
+                                id = registerResponse.user.id.toLong(),
+                                fullName = registerResponse.user.username,
+                                username = registerResponse.user.username,
+                                email = registerResponse.user.email,
+                                password = "",
+                                phoneNumber = "",
+                                profilePic = null,
+                                role = role,
+                                createdAt = now,
+                                updatedAt = now,
+                                address = "",
+                                city = "",
+                                country = "",
+                                zipCode = ""
+                            )
+                        }
+                    }
+
+                    // 💾 Guardem l'usuari localment
+                    saveLocalUser(user)
+
+                    // ✅ Actualitzem l’estat
+                    _authState.value = AuthUiState(
+                        isSuccess = true,
+                        token = registerResponse.token,
+                        user = registerResponse.user
+                    )
+
+                    Log.d("AuthViewModel", "✅ Register successful. Token: ${registerResponse.token}")
+                    Log.d("AuthViewModel", "✅ CurrentUser saved: $user")
+                }
+
+                is Resource.Error -> {
+                    _authState.value = AuthUiState(
+                        isLoading = false,
+                        error = result.message
+                    )
+                    Log.e("AuthViewModel", "❌ Register error: ${result.message}")
+                }
+
+                is Resource.Loading<*> -> {
+                    _authState.value = AuthUiState(isLoading = true)
+                }
             }
+
+            Log.d("AuthViewModel", "User: ${_authState.value.user}")
+            Log.d("AuthViewModel", "Token: ${_authState.value.token}")
         }
     }
 
+    // ---------- SAVE USER LOCALLY ----------
     fun saveLocalUser(user: User) {
-        _currentUser.value = user // _currentUser: MutableStateFlow<User?> = MutableStateFlow(null)
+        _currentUser.value = user
+        Log.d("AuthViewModel", "Current user updated: $user")
     }
+
 
     fun createService(
         title: String,
@@ -159,7 +339,6 @@ class AuthViewModel(
             }
         }
     }
-
 
     fun resetState() {
         _authState.value = AuthUiState()

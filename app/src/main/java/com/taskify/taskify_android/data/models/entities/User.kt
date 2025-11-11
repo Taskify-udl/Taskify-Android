@@ -4,26 +4,18 @@ import java.time.LocalDateTime
 
 interface User {
     val id: Long
-    val firstName: String
-    val lastName: String
+    val fullName: String
     val username: String
     val email: String
     val password: String
     val phoneNumber: String
     val profilePic: String?
-    val role: Role
+    var role: Role?
     val createdAt: LocalDateTime
     val updatedAt: LocalDateTime
 }
 
 enum class Role {
-    ADMIN, CUSTOMER, PROVIDER
+    ADMIN, CUSTOMER, FREELANCER,
+    COMPANY_ADMIN, COMPANY_WORKER, PROVIDER
 }
-
-enum class ProviderEnum {
-    FREELANCER, ENTERPRISE, WORKER
-}
-
-
-// Worker sol te acces als cpontractes de la empresa
-// Enterpr

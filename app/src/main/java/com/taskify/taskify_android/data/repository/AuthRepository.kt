@@ -8,10 +8,11 @@ import com.taskify.taskify_android.data.models.auth.LoginRequest
 import com.taskify.taskify_android.data.models.auth.LoginResponse
 import com.taskify.taskify_android.data.models.auth.RegisterRequest
 import com.taskify.taskify_android.data.models.auth.RegisterResponse
-import com.taskify.taskify_android.data.models.entities.OrderService
 import com.taskify.taskify_android.data.models.entities.ProviderService
+import com.taskify.taskify_android.data.models.entities.UserDraft
 import com.taskify.taskify_android.data.network.ApiService
 import retrofit2.Response
+import java.time.LocalDateTime
 
 class AuthRepository(private val api: ApiService) {
     // ---------- LOGIN ----------
@@ -56,15 +57,18 @@ class AuthRepository(private val api: ApiService) {
 
     // ---------- REGISTER ----------
     suspend fun register(
-        firstName: String,
-        lastName: String,
-        username: String,
-        email: String,
-        password: String,
+        userDraft: UserDraft,
         context: Context
     ): Resource<RegisterResponse> {
         return try {
-            val request = RegisterRequest(firstName, lastName, username, email, password)
+            val request = RegisterRequest(
+                fullname = userDraft.fullName,
+                username = userDraft.username,
+                email = userDraft.email,
+                password = userDraft.password,
+                role = userDraft.role.toString()
+            )
+            Log.d("AuthRepository", "Register request: $request")
             val response = api.register(request)
             Log.d("AuthRepository", "Register response: ${response.code()} ${response.message()}")
             Log.d("AuthRepository", "Register response body: ${response.body()}")
@@ -97,7 +101,7 @@ class AuthRepository(private val api: ApiService) {
         context: Context,
         providerId: Long
     ): Response<ProviderService> {
-        val now = java.time.LocalDateTime.now().toString() + "Z"
+        val now = LocalDateTime.now().toString() + "Z"
 
         val body = CreateServiceRequest(
             name = title,

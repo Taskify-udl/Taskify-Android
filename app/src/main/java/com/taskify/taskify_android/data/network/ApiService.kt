@@ -6,7 +6,6 @@ import com.taskify.taskify_android.data.models.auth.LoginResponse
 import com.taskify.taskify_android.data.models.auth.LogoutResponse
 import com.taskify.taskify_android.data.models.auth.RegisterRequest
 import com.taskify.taskify_android.data.models.auth.RegisterResponse
-import com.taskify.taskify_android.data.models.entities.OrderService
 import com.taskify.taskify_android.data.models.entities.ProviderService
 import retrofit2.Response
 import retrofit2.http.Body
