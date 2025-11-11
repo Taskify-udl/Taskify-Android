@@ -4,14 +4,13 @@ import java.time.LocalDateTime
 
 data class Provider(
     override val id: Long,
-    override val firstName: String,
-    override val lastName: String,
+    override val fullName: String,
     override val username: String,
     override val email: String,
     override val password: String,
     override val phoneNumber: String,
     override val profilePic: String? = null,
-    override val role: Role = Role.PROVIDER,
+    override var role: Role? = null,
     override val createdAt: LocalDateTime,
     override val updatedAt: LocalDateTime,
     override val address: String,
@@ -25,8 +24,7 @@ data class Provider(
     val services: List<ProviderService>
 ) : Customer(
     id,
-    firstName,
-    lastName,
+    fullName,
     username,
     email,
     password,

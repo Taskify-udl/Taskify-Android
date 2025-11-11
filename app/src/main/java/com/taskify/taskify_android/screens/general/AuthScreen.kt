@@ -174,7 +174,11 @@ fun AuthScreen(navController: NavHostController) {
 
                     AnimatedButton(
                         text = "Log In",
-                        onClick = { navController.navigate("login") },
+                        onClick = {
+                            navController.navigate("login") {
+                                popUpTo("authScreen") { inclusive = true }
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp)
@@ -182,7 +186,11 @@ fun AuthScreen(navController: NavHostController) {
 
                     AnimatedButton(
                         text = "Register",
-                        onClick = { navController.navigate("register") },
+                        onClick = {
+                            navController.navigate("register") {
+                                popUpTo("authScreen") { inclusive = true }
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
