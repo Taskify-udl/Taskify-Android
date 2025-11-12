@@ -312,38 +312,46 @@ fun StepPersonalInfo(
             OutlinedTextField(
                 value = userDraft.fullName,
                 onValueChange = { onUpdate(userDraft.copy(fullName = it)) },
-                label = { Text("Full Name") },
+                label = { Text("Full Name", color = Color.Black) },
+                placeholder = { Text("Your full name", color = Color.Black.copy(alpha = 0.6f)) },
                 singleLine = true,
+                textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = userDraft.username,
                 onValueChange = { onUpdate(userDraft.copy(username = it)) },
-                label = { Text("Username") },
-                placeholder = { Text("At least 4 characters") },
+                label = { Text("Username", color = Color.Black) },
+                placeholder = { Text("At least 4 characters", color = Color.Black.copy(alpha = 0.6f)) },
                 singleLine = true,
+                textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = userDraft.email,
                 onValueChange = { onUpdate(userDraft.copy(email = it)) },
-                label = { Text("Email") },
+                label = { Text("Email", color = Color.Black) },
+                placeholder = { Text("example@email.com", color = Color.Black.copy(alpha = 0.6f)) },
                 singleLine = true,
+                textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = userDraft.password,
                 onValueChange = { onUpdate(userDraft.copy(password = it)) },
-                label = { Text("Password") },
+                label = { Text("Password", color = Color.Black) },
+                placeholder = { Text("********", color = Color.Black.copy(alpha = 0.6f)) },
                 singleLine = true,
+                textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 visualTransformation = if (passVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
-                    val icon =
-                        if (passVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                    IconButton(onClick = { passVisible = !passVisible }) { Icon(icon, null) }
+                    val icon = if (passVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    IconButton(onClick = { passVisible = !passVisible }) {
+                        Icon(icon, null, tint = Color.Black)
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -351,13 +359,16 @@ fun StepPersonalInfo(
             OutlinedTextField(
                 value = userDraft.confirmPassword,
                 onValueChange = { onUpdate(userDraft.copy(confirmPassword = it)) },
-                label = { Text("Confirm Password") },
+                label = { Text("Confirm Password", color = Color.Black) },
+                placeholder = { Text("Repeat password", color = Color.Black.copy(alpha = 0.6f)) },
                 singleLine = true,
+                textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 visualTransformation = if (confirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
-                    val icon =
-                        if (confirmVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                    IconButton(onClick = { confirmVisible = !confirmVisible }) { Icon(icon, null) }
+                    val icon = if (confirmVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    IconButton(onClick = { confirmVisible = !confirmVisible }) {
+                        Icon(icon, null, tint = Color.Black)
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -716,27 +727,30 @@ fun StepCompanyInfo(
             OutlinedTextField(
                 value = companyName,
                 onValueChange = onCompanyNameChange,
-                label = { Text("Company Name") },
-                placeholder = { Text("e.g. Techify Solutions") },
+                label = { Text("Company Name", color = Color.Black) },
+                placeholder = { Text("e.g. Techify Solutions", color = Color.Black.copy(alpha = 0.6f)) },
                 singleLine = true,
+                textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = cif,
                 onValueChange = onCifChange,
-                label = { Text("CIF") },
-                placeholder = { Text("e.g. B12345678") },
+                label = { Text("CIF", color = Color.Black) },
+                placeholder = { Text("e.g. B12345678", color = Color.Black.copy(alpha = 0.6f)) },
                 singleLine = true,
+                textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = companyEmail,
                 onValueChange = onCompanyEmailChange,
-                label = { Text("Company Email") },
-                placeholder = { Text("e.g. contact@techify.com") },
+                label = { Text("Company Email", color = Color.Black) },
+                placeholder = { Text("e.g. contact@techify.com", color = Color.Black.copy(alpha = 0.6f)) },
                 singleLine = true,
+                textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 modifier = Modifier.fillMaxWidth()
             )
 

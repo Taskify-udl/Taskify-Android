@@ -1,5 +1,9 @@
 package com.taskify.taskify_android.screens.general
 
+
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,8 +28,20 @@ import androidx.navigation.NavController
 import com.taskify.taskify_android.R
 import com.taskify.taskify_android.logic.viewmodels.AuthViewModel
 import com.taskify.taskify_android.ui.theme.Dark
-import com.taskify.taskify_android.ui.theme.PrimaryColor
 import com.taskify.taskify_android.ui.theme.TopGradientEnd
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.border
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.unit.IntSize
+import com.taskify.taskify_android.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,52 +53,114 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
 
     val tabs = listOf("Offers", "Favorites", "Taskify", "Orders", "Settings")
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = tabs[selectedTab],
-                        color = PrimaryColor,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                actions = {
-                    if (selectedTab == 0) {
-                        IconButton(onClick = { navController.navigate("chat") }) {
-                            Icon(
-                                imageVector = Icons.Default.Chat,
-                                contentDescription = "Chat",
-                                tint = TopGradientEnd
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.White
-                )
-            )
-        },
-        bottomBar = {
-            BottomNavigationBar(selectedTab) { selectedTab = it }
-        }
-    ) { padding ->
+    // 🔁 Animation
+    val infiniteTransition = rememberInfiniteTransition(label = "homeBgAnim")
+    val progress by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(10000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "progressAnim"
+    )
+
+    var sizePx by remember { mutableStateOf(IntSize(0, 0)) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .onGloballyPositioned { coords -> sizePx = coords.size }
+    ) {
+        val widthF = sizePx.width.toFloat().coerceAtLeast(1f)
+        val heightF = sizePx.height.toFloat().coerceAtLeast(1f)
+        val start = Offset(widthF * (1f - progress), 0f)
+        val end = Offset(0f, heightF * progress)
+
+        // 🌈 Gradient background
         Box(
             modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .background(Color.White)
-        ) {
-            when (selectedTab) {
-                0 -> OffersScreenWithPopup(
-                    searchQuery = searchQuery,
-                    onSearchChange = { searchQuery = it },
-                    navController = navController
+                .matchParentSize()
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            BgWhite,
+                            BgSecondary,
+                            BrandBlue.copy(alpha = 0.12f)
+                        ),
+                        start = start,
+                        end = end
+                    )
                 )
-                1 -> FavoritesScreen(navController = navController)
-                2 -> BecomeProviderScreen()
-                3 -> OrdersScreen()
-                4 -> SettingsScreen()
+        )
+
+        // 🔔 Notification ikona (gornji lijevi ugao)
+        IconButton(
+            onClick = { /* TODO: navigacija na NotificationsScreen() */ },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(start = 10.dp, top = 45.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Notifications,
+                contentDescription = "Notifications",
+                tint = BrandBlue
+            )
+        }
+
+        IconButton(
+            onClick = {/* TODO Chat function*/},
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(start = 10.dp, top = 45.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Chat,
+                contentDescription = "Chat",
+                tint = BrandBlue
+            )
+        }
+
+        // 🔹 Glavni Scaffold
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            text = tabs[selectedTab],
+                            color = TextDark,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = Color.Transparent
+                    )
+                )
+            },
+            bottomBar = {
+                BottomNavigationBar(selectedTab) { selectedTab = it }
+            },
+            containerColor = Color.Transparent
+        ) { padding ->
+            Box(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .background(Color.Transparent),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                when (selectedTab) {
+                    0 -> OffersScreenWithPopup(
+                        searchQuery = searchQuery,
+                        onSearchChange = { searchQuery = it },
+                        navController = navController
+                    )
+                    1 -> FavoritesScreen(navController = navController)
+                    2 -> BecomeProviderScreen()
+                    3 -> OrdersScreen()
+                    4 -> SettingsScreen()
+                }
             }
         }
     }
@@ -128,18 +205,14 @@ fun OffersScreenWithPopup(
     onSearchChange: (String) -> Unit,
     navController: NavController
 ) {
-    val sponsoredAds = listOf("Plumber Fix", "Electric Master", "Quick Clean", "PaintPro")
-    val categories = listOf("Plumber", "Electrician", "Cleaner", "Painter")
-    val plumberProfiles = listOf(
-        "Plumber Expert - Available 24/7",
-        "FastFix Plumbing Services",
-        "AquaPro - Professional Plumber"
-    )
-
     var selectedOffer by remember { mutableStateOf<String?>(null) }
 
-    Column(modifier = Modifier.padding(16.dp)) {
-        // Search bar
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+    ) {
+        // 🔍 Search bar
         OutlinedTextField(
             value = searchQuery,
             onValueChange = onSearchChange,
@@ -153,72 +226,282 @@ fun OffersScreenWithPopup(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (searchQuery.contains("plumber", ignoreCase = true)) {
-            Text("Search results:", fontWeight = FontWeight.SemiBold, color = Dark)
-            Spacer(modifier = Modifier.height(8.dp))
-            plumberProfiles.forEach { profile ->
+        // 🔹 Service Categories (ikonice koje se pomjeraju s desna na lijevo)
+        Text(
+            text = "Service Categories",
+            fontWeight = FontWeight.SemiBold,
+            color = TopGradientEnd
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState(), reverseScrolling = true)
+        ) {
+            // 🔧 Plumber
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .padding(horizontal = 10.dp)
+                    .clickable { navController.navigate("category/Plumber") }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(70.dp)
+                        .background(BrandBlue.copy(alpha = 0.15f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Build,
+                        contentDescription = "Plumber",
+                        tint = TopGradientEnd,
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Plumber", color = Dark, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            }
+
+            // ⚡ Electrician
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .padding(horizontal = 10.dp)
+                    .clickable { navController.navigate("category/Electrician") }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(70.dp)
+                        .background(BrandBlue.copy(alpha = 0.15f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Bolt,
+                        contentDescription = "Electrician",
+                        tint = TopGradientEnd,
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Electrician", color = Dark, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            }
+
+            // 🧹 Cleaner
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .padding(horizontal = 10.dp)
+                    .clickable { navController.navigate("category/Cleaner") }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(70.dp)
+                        .background(BrandBlue.copy(alpha = 0.15f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CleaningServices,
+                        contentDescription = "Cleaner",
+                        tint = TopGradientEnd,
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Cleaner", color = Dark, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            }
+
+            // 🎨 Painter
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .padding(horizontal = 10.dp)
+                    .clickable { navController.navigate("category/Painter") }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(70.dp)
+                        .background(BrandBlue.copy(alpha = 0.15f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Brush,
+                        contentDescription = "Painter",
+                        tint = TopGradientEnd,
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Painter", color = Dark, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+// 🔸 Sponsored Ads (pravougaonici skoro pune širine, vertikalno skrolanje)
+        Text("Sponsored Ads", fontWeight = FontWeight.SemiBold, color = TopGradientEnd)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            // 🧼 SuperClean
+            item {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(100.dp)
-                        .padding(vertical = 4.dp)
-                        .background(Color(0xFFD1E8FF), RoundedCornerShape(12.dp))
-                        .clickable { selectedOffer = profile },
-                    contentAlignment = Alignment.CenterStart
+                        .height(180.dp)
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { selectedOffer = "SuperClean - Deep Cleaning Services" }
                 ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.worker1),
+                        contentDescription = "SuperClean",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                                )
+                            )
+                    )
                     Text(
-                        profile,
-                        modifier = Modifier.padding(start = 16.dp),
-                        color = Dark,
-                        fontWeight = FontWeight.Medium
+                        text = "SuperClean - Deep Cleaning Services",
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
                     )
                 }
             }
-        } else {
-            // Sponsored Ads
-            Text("Sponsored Ads", fontWeight = FontWeight.SemiBold, color = TopGradientEnd)
-            Row(
-                modifier = Modifier
-                    .horizontalScroll(rememberScrollState())
-                    .padding(vertical = 8.dp)
-            ) {
-                sponsoredAds.forEach { offer ->
-                    OfferCardItem(offerName = offer) { selectedOffer = offer }
+
+            // 🎨 PaintPro
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { selectedOffer = "PaintPro - Interior & Exterior Painting" }
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.worker2),
+                        contentDescription = "PaintPro",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                                )
+                            )
+                    )
+                    Text(
+                        text = "PaintPro - Interior & Exterior Painting",
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
                 }
             }
 
-            // Service Categories
-            Text("Service Categories", fontWeight = FontWeight.SemiBold, color = TopGradientEnd)
-            Column(modifier = Modifier.padding(top = 8.dp)) {
-                categories.forEach { category ->
+            // 🔧 QuickFix
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { selectedOffer = "QuickFix - 24/7 Plumbing" }
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.worker3),
+                        contentDescription = "QuickFix",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
+                    )
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(70.dp)
-                            .padding(vertical = 4.dp)
-                            .background(Color(0xFFD1E8FF), RoundedCornerShape(12.dp))
-                            .clickable {
-                                navController.navigate("category/$category")
-                            },
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        Text(
-                            text = category,
-                            modifier = Modifier.padding(start = 16.dp),
-                            color = Dark,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                                )
+                            )
+                    )
+                    Text(
+                        text = "QuickFix - 24/7 Plumbing",
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
+            }
+
+            // ⚡ EcoElectric
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { selectedOffer = "EcoElectric - Sustainable Electrical Work" }
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.worker4),
+                        contentDescription = "EcoElectric",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                                )
+                            )
+                    )
+                    Text(
+                        text = "EcoElectric - Sustainable Electrical Work",
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
                 }
             }
         }
     }
 
-    // Popup for detailed offers
+    // 🪟 Popup za prikaz detalja
     if (selectedOffer != null) {
         AlertDialog(
             onDismissRequest = { selectedOffer = null },
-            title = { Text(text = selectedOffer ?: "", color = TopGradientEnd) },
+            title = { Text(selectedOffer ?: "", color = TopGradientEnd) },
             text = {
                 Column {
                     Text("Description: This is a demo description for $selectedOffer")
@@ -240,14 +523,15 @@ fun OffersScreenWithPopup(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { selectedOffer = null }) { Text("Close", color = TopGradientEnd) }
+                TextButton(onClick = { selectedOffer = null }) {
+                    Text("Close", color = TopGradientEnd)
+                }
             },
             shape = RoundedCornerShape(16.dp),
             containerColor = Color.White
         )
     }
 }
-
 
 @Composable
 fun OfferCardItem(offerName: String, onClick: () -> Unit) {
@@ -267,59 +551,144 @@ fun OfferCardItem(offerName: String, onClick: () -> Unit) {
 // FavoritesScreen
 @Composable
 fun FavoritesScreen(navController: NavController) {
-    // Lista providera: ime tima, ime osobe, profesija
-    val favoriteProviders = listOf(
-        Triple("HandyMan Pro", "John Doe", "Plumber"),
-        Triple("ElectricFix", "Jane Smith", "Electrician"),
-        Triple("QuickClean Team", "Mike Johnson", "Cleaner")
-    )
-
     Column(modifier = Modifier.padding(16.dp)) {
-        Text(
-            "Your Favorite Providers",
-            fontWeight = FontWeight.Bold,
-            color = PrimaryColor,
-            fontSize = 20.sp
-        )
+
         Spacer(modifier = Modifier.height(8.dp))
 
-        favoriteProviders.forEach { (teamName, personName, profession) ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-                    .padding(vertical = 4.dp)
-                    .background(Color(0xFFD1E8FF), RoundedCornerShape(12.dp))
-                    .clickable {
-                        // Navigacija na profil providera
-                        navController.navigate("providerProfile/$personName")
-                    },
-                contentAlignment = Alignment.CenterStart
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(start = 16.dp)
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            // 🧰 HandyMan Pro
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { navController.navigate("providerProfile/John Doe") }
                 ) {
-                    // Profilna slika
                     Image(
-                        painter = painterResource(id = R.drawable.usericon),
-                        contentDescription = "User Logo",
-                        modifier = Modifier.size(80.dp)
+                        painter = painterResource(id = R.drawable.worker3),
+                        contentDescription = "John Doe - HandyMan Pro",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
                     )
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Column {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                                )
+                            )
+                    )
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp)
+                    ) {
                         Text(
-                            text = personName,
-                            color = TopGradientEnd,
+                            text = "John Doe",
+                            color = Color.White,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
+                            fontSize = 18.sp
                         )
                         Text(
-                            text = profession,
-                            color = Dark,
-                            fontWeight = FontWeight.Medium,
+                            text = "Plumber • HandyMan Pro",
+                            color = Color.White.copy(alpha = 0.8f),
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+
+            // ⚡ ElectricFix
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { navController.navigate("providerProfile/Jane Smith") }
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.worker4),
+                        contentDescription = "Jane Smith - ElectricFix",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                                )
+                            )
+                    )
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Jane Smith",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                        Text(
+                            text = "Electrician • ElectricFix",
+                            color = Color.White.copy(alpha = 0.8f),
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+
+            // 🧼 QuickClean Team
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { navController.navigate("providerProfile/Mike Johnson") }
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.worker1),
+                        contentDescription = "Mike Johnson - QuickClean Team",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                                )
+                            )
+                    )
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Mike Johnson",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                        Text(
+                            text = "Cleaner • QuickClean Team",
+                            color = Color.White.copy(alpha = 0.8f),
                             fontSize = 14.sp
                         )
                     }
@@ -330,55 +699,147 @@ fun FavoritesScreen(navController: NavController) {
 }
 
 
+// 🔹 Helper struktura jer Triple nema četvrti element
+data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
+
+
 
 // OrdersScreen
 @Composable
 fun OrdersScreen() {
-    // Reservations simulation
-    val orders = listOf(
-        listOf("John Doe", "Plumber", "14.10.2025", "14:00"),
-        listOf("Jane Smith", "Electrician", "15.10.2025", "10:00"),
-        listOf("Mike Johnson", "Cleaner", "16.10.2025", "09:30")
-    )
-
     Column(modifier = Modifier.padding(16.dp)) {
-        Text("My Orders", fontWeight = FontWeight.Bold, color = PrimaryColor, fontSize = 20.sp)
+        Text(
+            text = "My Orders",
+            fontWeight = FontWeight.Bold,
+            color = TopGradientEnd,
+            fontSize = 20.sp
+        )
         Spacer(modifier = Modifier.height(8.dp))
 
-        orders.forEach { order ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-                    .padding(vertical = 4.dp)
-                    .background(Color(0xFFD1E8FF), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp)
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            // 🔧 John Doe - Plumber
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFFF1F6FA))
+                        .border(1.dp, Color(0xFFD1E8FF), RoundedCornerShape(16.dp))
+                        .padding(16.dp)
                 ) {
-                    // Profile picture
-                    Image(
-                        painter = painterResource(id = R.drawable.usericon),
-                        contentDescription = "User Logo",
-                        modifier = Modifier.size(80.dp)
-                    )
+                    Column {
+                        Text(
+                            text = "John Doe",
+                            color = TopGradientEnd,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                        Text(
+                            text = "Plumber",
+                            color = Dark.copy(alpha = 0.9f),
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Date: 14.10.2025",
+                            color = Dark.copy(alpha = 0.8f),
+                            fontSize = 13.sp
+                        )
+                        Text(
+                            text = "Time: 14:00",
+                            color = Dark.copy(alpha = 0.8f),
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            }
 
-                    Spacer(modifier = Modifier.width(12.dp))
+            // ⚡ Jane Smith - Electrician
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFFF1F6FA))
+                        .border(1.dp, Color(0xFFD1E8FF), RoundedCornerShape(16.dp))
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "Jane Smith",
+                            color = TopGradientEnd,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                        Text(
+                            text = "Electrician",
+                            color = Dark.copy(alpha = 0.9f),
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Date: 15.10.2025",
+                            color = Dark.copy(alpha = 0.8f),
+                            fontSize = 13.sp
+                        )
+                        Text(
+                            text = "Time: 10:00",
+                            color = Dark.copy(alpha = 0.8f),
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            }
 
-                    Column(verticalArrangement = Arrangement.Center) {
-                        Text(order[0], color = TopGradientEnd, fontWeight = FontWeight.Bold, fontSize = 16.sp) // Provider
-                        Text(order[1], color = Dark, fontWeight = FontWeight.Medium, fontSize = 14.sp) // Profession
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text("Date: ${order[2]} • Time: ${order[3]}", color = Dark.copy(alpha = 0.8f), fontSize = 13.sp)
+            // 🧼 Mike Johnson - Cleaner
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFFF1F6FA))
+                        .border(1.dp, Color(0xFFD1E8FF), RoundedCornerShape(16.dp))
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "Mike Johnson",
+                            color = TopGradientEnd,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                        Text(
+                            text = "Cleaner",
+                            color = Dark.copy(alpha = 0.9f),
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Date: 16.10.2025",
+                            color = Dark.copy(alpha = 0.8f),
+                            fontSize = 13.sp
+                        )
+                        Text(
+                            text = "Time: 09:30",
+                            color = Dark.copy(alpha = 0.8f),
+                            fontSize = 13.sp
+                        )
                     }
                 }
             }
         }
     }
 }
-
 
 // Logo / Become Provider
 @Composable
@@ -391,27 +852,100 @@ fun BecomeProviderScreen() {
 // Settings
 @Composable
 fun SettingsScreen() {
-    Column(modifier = Modifier.padding(16.dp)) {
-        // Profilna slika
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // 👤 Profilna slika centrirana
         Image(
-            painter = painterResource(id = R.drawable.usericon),
+            painter = painterResource(id = R.drawable.profilepic),
             contentDescription = "User Logo",
-            modifier = Modifier.size(80.dp)
+            modifier = Modifier
+                .size(100.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFE7F1FB))
+                .border(2.dp, Color(0xFFD1E8FF), CircleShape)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "Account Settings",
+            fontWeight = FontWeight.Bold,
+            color = TopGradientEnd,
+            fontSize = 20.sp
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        val options = listOf("Profile Info","Security","Privacy","Become a provider")
-        options.forEach { opt ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp)
-                    .padding(vertical = 4.dp)
-                    .background(Color(0xFFD1E8FF), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.CenterStart
-            ){
-                Text(opt, modifier = Modifier.padding(start = 16.dp), color = Dark, fontWeight = FontWeight.Medium)
+        // 🔹 Opcije
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // ⚙️ Settings
+            item {
+                SettingItem("Settings") {
+                    // navController.navigate("settingsDetail") // primjer
+                }
+            }
+
+            // 👤 Profile Info
+            item {
+                SettingItem("Profile Info") {
+                    // navController.navigate("profileInfo")
+                }
+            }
+
+            // 🔐 Security
+            item {
+                SettingItem("Security") {
+                    // navController.navigate("security")
+                }
+            }
+
+            // 📊 Dashboard
+            item {
+                SettingItem("Dashboard") {
+                    // navController.navigate("dashboard")
+                }
+            }
+
+            // 🚪 Logout
+            item {
+                SettingItem("Logout", highlight = true) {
+                    // handle logout logic
+                }
             }
         }
+    }
+}
+
+// 🔹 Komponenta za svaku stavku u listi
+@Composable
+fun SettingItem(title: String, highlight: Boolean = false, onClick: () -> Unit = {}) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (highlight) Color(0xFFFFEDED) else Color(0xFFF1F6FA))
+            .border(
+                1.dp,
+                if (highlight) Color(0xFFFFC5C5) else Color(0xFFD1E8FF),
+                RoundedCornerShape(16.dp)
+            )
+            .clickable { onClick() }
+            .padding(start = 20.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Text(
+            text = title,
+            color = if (highlight) Color(0xFFD32F2F) else Dark,
+            fontWeight = if (highlight) FontWeight.Bold else FontWeight.Medium,
+            fontSize = 16.sp
+        )
     }
 }

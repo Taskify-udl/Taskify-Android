@@ -48,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.draw.clip
@@ -190,28 +191,37 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = username,
                         onValueChange = { username = it },
-                        label = { Text("Username") },
-                        placeholder = { Text("username") },
+                        label = { Text("Username", color = Color.Black) },
+                        placeholder = { Text("username", color = Color.Black.copy(alpha = 0.6f)) },
                         singleLine = true,
+                        textStyle = LocalTextStyle.current.copy(color = Color.Black),
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
-                        label = { Text("Password") },
+                        label = { Text("Password", color = Color.Black) },
+                        placeholder = { Text("password", color = Color.Black.copy(alpha = 0.6f)) },
                         singleLine = true,
+                        textStyle = LocalTextStyle.current.copy(color = Color.Black),
                         visualTransformation =
                             if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         trailingIcon = {
                             val icon =
                                 if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(imageVector = icon, contentDescription = null)
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = null,
+                                    tint = Color.Black
+                                )
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
                     )
+
+
 
                     TextButton(onClick = { /* TODO: navigate to recovery */ }) {
                         Text(
