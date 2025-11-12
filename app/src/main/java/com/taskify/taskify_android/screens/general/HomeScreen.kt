@@ -47,13 +47,12 @@ import com.taskify.taskify_android.ui.theme.*
 @Composable
 fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
     val user by authViewModel.currentUser.collectAsState()
-    val context = LocalContext.current
     var selectedTab by remember { mutableIntStateOf(0) }
     var searchQuery by remember { mutableStateOf("") }
 
     val tabs = listOf("Offers", "Favorites", "Taskify", "Orders", "Settings")
 
-    // 🔁 Animation
+    // 🌈 Animated gradient background (el deixem igual)
     val infiniteTransition = rememberInfiniteTransition(label = "homeBgAnim")
     val progress by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -77,7 +76,6 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
         val start = Offset(widthF * (1f - progress), 0f)
         val end = Offset(0f, heightF * progress)
 
-        // 🌈 Gradient background
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -94,34 +92,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                 )
         )
 
-        // 🔔 Notification ikona (gornji lijevi ugao)
-        IconButton(
-            onClick = { /* TODO: navigacija na NotificationsScreen() */ },
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(start = 10.dp, top = 45.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Notifications,
-                contentDescription = "Notifications",
-                tint = BrandBlue
-            )
-        }
-
-        IconButton(
-            onClick = {/* TODO Chat function*/},
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(start = 10.dp, top = 45.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Chat,
-                contentDescription = "Chat",
-                tint = BrandBlue
-            )
-        }
-
-        // 🔹 Glavni Scaffold
+        // 🔹 Scaffold amb topBar i bottomBar
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
@@ -132,7 +103,24 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                             fontWeight = FontWeight.Bold
                         )
                     },
-
+                    navigationIcon = {
+                        IconButton(onClick = { /* TODO: Notifications */ }) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = "Notifications",
+                                tint = BrandBlue
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { /* TODO: Chat */ }) {
+                            Icon(
+                                imageVector = Icons.Default.Chat,
+                                contentDescription = "Chat",
+                                tint = BrandBlue
+                            )
+                        }
+                    },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = Color.Transparent
                     )
@@ -146,8 +134,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
             Box(
                 modifier = Modifier
                     .padding(padding)
-                    .fillMaxSize()
-                    .background(Color.Transparent),
+                    .fillMaxSize(),
                 contentAlignment = Alignment.TopCenter
             ) {
                 when (selectedTab) {
@@ -156,7 +143,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                         onSearchChange = { searchQuery = it },
                         navController = navController
                     )
-                    1 -> FavoritesScreen(navController = navController)
+                    1 -> FavoritesScreen(navController)
                     2 -> BecomeProviderScreen()
                     3 -> OrdersScreen()
                     4 -> SettingsScreen()
@@ -165,6 +152,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
         }
     }
 }
+
 
 // Bottom navigation bar
 @Composable
