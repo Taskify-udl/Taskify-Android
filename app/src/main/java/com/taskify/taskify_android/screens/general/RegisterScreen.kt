@@ -61,10 +61,9 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
     var step by remember { mutableStateOf(SignupStep.PERSONAL_INFO) }
     val context = LocalContext.current
 
-    // 🔹 En comptes de tenir 12 variables, tenim només 1
     var userDraft by remember { mutableStateOf(UserDraft()) }
 
-    // 🔹 Animació del fons (la deixem igual)
+    // 🔹 Animacija pozadine
     val infiniteTransition = rememberInfiniteTransition(label = "bg")
     val progress by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -85,7 +84,7 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
     val endB = Offset(screenWidthPx * progress, screenHeightPx)
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 🎨 Fons igual
+        // 🎨 Gradient pozadine
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -150,10 +149,7 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                             email = userDraft.email,
                             onBack = { step = SignupStep.ACCOUNT_TYPE },
                             onStart = {
-                                // 🔹 Executem el registre segons el rol del provider
                                 authViewModel.register(userDraft, context)
-
-                                // 🔹 Un cop registrat, naveguem a la Home (o pots posar una pantalla d'èxit)
                                 navController.navigate("homeScreen") {
                                     popUpTo("register") { inclusive = true }
                                 }
@@ -163,12 +159,10 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                         SignupStep.PROVIDER_TYPE -> StepProviderType(
                             onBack = { step = SignupStep.ACCOUNT_TYPE },
                             onFreelancerSelected = {
-                                // 🔹 Freelancer
                                 userDraft = userDraft.copy(role = Role.FREELANCER)
                                 step = SignupStep.FREELANCER_SUMMARY
                             },
                             onEmpresaSelected = {
-                                // 🔹 Empresa (admin)
                                 userDraft = userDraft.copy(role = Role.COMPANY_ADMIN)
                                 step = SignupStep.COMPANY_INFO
                             }
@@ -179,10 +173,7 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                             email = userDraft.email,
                             onBack = { step = SignupStep.PROVIDER_TYPE },
                             onStart = {
-                                // 🔹 Executem el registre segons el rol del provider
                                 authViewModel.register(userDraft, context)
-
-                                // 🔹 Un cop registrat, naveguem a la Home (o pots posar una pantalla d'èxit)
                                 navController.navigate("homeScreen") {
                                     popUpTo("register") { inclusive = true }
                                 }
@@ -195,9 +186,7 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                             companyEmail = userDraft.companyEmail,
                             onCompanyNameChange = { userDraft = userDraft.copy(companyName = it) },
                             onCifChange = { userDraft = userDraft.copy(cif = it) },
-                            onCompanyEmailChange = {
-                                userDraft = userDraft.copy(companyEmail = it)
-                            },
+                            onCompanyEmailChange = { userDraft = userDraft.copy(companyEmail = it) },
                             onContinue = {
                                 val error = validateCompanyInfo(
                                     userDraft.companyName,
@@ -214,7 +203,6 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                             context = context,
                             onBack = { step = SignupStep.COMPANY_INFO },
                             onVerify = {
-                                // 🔹 Assegurem que continua sent Company Admin
                                 userDraft = userDraft.copy(role = Role.COMPANY_ADMIN)
                                 step = SignupStep.COMPANY_SUMMARY
                             }
@@ -226,10 +214,7 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                             companyEmail = userDraft.companyEmail,
                             onBack = { step = SignupStep.COMPANY_CODE },
                             onStart = {
-                                // 🔹 Executem el registre segons el rol del provider
                                 authViewModel.register(userDraft, context)
-
-                                // 🔹 Un cop registrat, naveguem a la Home (o pots posar una pantalla d'èxit)
                                 navController.navigate("homeScreen") {
                                     popUpTo("register") { inclusive = true }
                                 }
@@ -237,9 +222,42 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                         )
                     }
                 }
+
+                // 🔹 Already have an account? Login
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Already have an account?",
+                            fontSize = 14.sp,
+                            color = TextGray
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = "Login",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BrandBlue,
+                            modifier = Modifier.clickable {
+                                navController.navigate("login") {
+                                    popUpTo("register") { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            }
+                        )
+                    }
+                }
             }
 
-            // 🔙 Mini card de fletxa enrere — adaptativa i visible
+            // 🔙 Mini back arrow
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -272,7 +290,6 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
         }
     }
 }
-
 
 @Composable
 fun StepPersonalInfo(
