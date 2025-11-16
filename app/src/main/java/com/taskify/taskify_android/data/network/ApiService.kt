@@ -6,10 +6,14 @@ import com.taskify.taskify_android.data.models.auth.LoginResponse
 import com.taskify.taskify_android.data.models.auth.LogoutResponse
 import com.taskify.taskify_android.data.models.auth.RegisterRequest
 import com.taskify.taskify_android.data.models.auth.RegisterResponse
+import com.taskify.taskify_android.data.models.auth.UserResponse
 import com.taskify.taskify_android.data.models.entities.ProviderService
+import com.taskify.taskify_android.data.models.entities.User
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 
 interface ApiService {
@@ -27,4 +31,14 @@ interface ApiService {
     suspend fun createService(
         @Body body: CreateServiceRequest
     ): Response<ProviderService>
+
+    @GET("api/profile_detail")
+    suspend fun getProfile(): Response<UserResponse>
+
+
+    @PATCH("api/profile_detail")
+    suspend fun updateProfile(
+        @Header("Authorization") token: String,
+        @Body body: Map<String, Any?>
+    ): Response<User>
 }

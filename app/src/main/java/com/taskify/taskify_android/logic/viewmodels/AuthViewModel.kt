@@ -39,7 +39,8 @@ class AuthViewModel(
     val currentUser: StateFlow<User?> get() = _currentUser
     private val _createServiceState = MutableLiveData<Resource<ProviderService>>()
     val createServiceState: LiveData<Resource<ProviderService>> = _createServiceState
-
+    private val _profileState = MutableStateFlow<Resource<User>>(Resource.Loading())
+    val profileState: StateFlow<Resource<User>> = _profileState
 
     // ---------- LOGIN ----------
     fun login(username: String, password: String, context: Context) {
@@ -233,7 +234,10 @@ class AuthViewModel(
                         )
 
                         Role.ADMIN -> {
-                            Log.w("AuthViewModel", "⚠️ Usuari ADMIN detectat al registre, no gestionat.")
+                            Log.w(
+                                "AuthViewModel",
+                                "⚠️ Usuari ADMIN detectat al registre, no gestionat."
+                            )
                             Customer(
                                 id = registerResponse.user.id.toLong(),
                                 fullName = registerResponse.user.username,
@@ -263,8 +267,12 @@ class AuthViewModel(
                         user = registerResponse.user
                     )
 
-                    Log.d("AuthViewModel", "✅ Register successful. Token: ${registerResponse.token}")
+                    Log.d(
+                        "AuthViewModel",
+                        "✅ Register successful. Token: ${registerResponse.token}"
+                    )
                     Log.d("AuthViewModel", "✅ CurrentUser saved: $user")
+                    Log.d("AuthViewModel", "Token: ${_authState.value.token}")
                 }
 
                 is Resource.Error -> {
@@ -287,8 +295,110 @@ class AuthViewModel(
 
     // ---------- SAVE USER LOCALLY ----------
     fun saveLocalUser(user: User) {
+        val current = _currentUser.value
+
+        if (current != null && current.id == user.id && current.username == user.username && current.role == user.role) {
+            return
+        }
         _currentUser.value = user
-        Log.d("AuthViewModel", "Current user updated: $user")
+    }
+
+    fun loadProfile() {
+        viewModelScope.launch {
+            _profileState.value = Resource.Loading()
+            val result = repository.getProfile()
+            if (result is Resource.Success) {
+                // Convertim UserResponse a Provider/Customer segons el role
+                val body = result.data
+                val role = Role.valueOf(body.role.uppercase())
+                val now = java.time.LocalDateTime.now()
+
+                val user: User = when (role) {
+                    Role.FREELANCER, Role.COMPANY_ADMIN, Role.COMPANY_WORKER, Role.PROVIDER -> Provider(
+                        id = body.id.toLong(),
+                        fullName = body.username,
+                        username = body.username,
+                        email = body.email,
+                        password = "",
+                        phoneNumber = "",
+                        profilePic = null,
+                        role = role,
+                        createdAt = now,
+                        updatedAt = now,
+                        address = "",
+                        city = "",
+                        country = "",
+                        zipCode = "",
+                        bio = "",
+                        experienceYears = 0,
+                        averageRating = 0.0,
+                        isVerified = false,
+                        services = emptyList()
+                    )
+
+                    Role.CUSTOMER -> Customer(
+                        id = body.id.toLong(),
+                        fullName = body.username,
+                        username = body.username,
+                        email = body.email,
+                        password = "",
+                        phoneNumber = "",
+                        profilePic = null,
+                        role = role,
+                        createdAt = now,
+                        updatedAt = now,
+                        address = "",
+                        city = "",
+                        country = "",
+                        zipCode = ""
+                    )
+
+                    Role.ADMIN -> Customer(
+                        id = body.id.toLong(),
+                        fullName = body.username,
+                        username = body.username,
+                        email = body.email,
+                        password = "",
+                        phoneNumber = "",
+                        profilePic = null,
+                        role = role,
+                        createdAt = now,
+                        updatedAt = now,
+                        address = "",
+                        city = "",
+                        country = "",
+                        zipCode = ""
+                    )
+                }
+
+                saveLocalUser(user)
+                _profileState.value = Resource.Success(user)
+            } else if (result is Resource.Error) {
+                _profileState.value = Resource.Error(result.message)
+            }
+        }
+    }
+
+
+    fun updateProfile(
+        context: Context,
+        updates: Map<String, Any?>,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            val token = AuthPreferences.getTokenBlocking(context) ?: return@launch
+
+            when (val result = repository.updateProfile(context, updates)) {
+                is Resource.Success -> {
+                    saveLocalUser(result.data)
+                    onSuccess()
+                }
+
+                is Resource.Error -> onError(result.message)
+                else -> {}
+            }
+        }
     }
 
 
