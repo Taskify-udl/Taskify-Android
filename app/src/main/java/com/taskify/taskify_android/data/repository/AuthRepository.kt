@@ -111,16 +111,24 @@ class AuthRepository(private val api: ApiService) {
     }
 
     // ---------- UPDATE PROFILE ----------
-    suspend fun updateProfile(context: Context, updates: Map<String, Any?>): Resource<User> {
+    suspend fun updateProfile(
+        updates: Map<String, Any?>
+    ): Resource<UserResponse> {
+        Log.d("AuthRepository", "updateProfile updates: $updates")
         return try {
-            val token = AuthPreferences.getTokenBlocking(context) ?: return Resource.Error("No token found")
-            val response = api.updateProfile("Token $token", updates)
+            val response = api.updateProfile(updates)
+            Log.d(
+                "AuthRepository",
+                "updateProfile response: ${response.code()} ${response.message()}"
+            )
+
             if (response.isSuccessful) {
                 response.body()?.let { Resource.Success(it) }
                     ?: Resource.Error("Empty update response")
             } else {
                 Resource.Error("Error updating profile: ${response.code()}")
             }
+
         } catch (e: Exception) {
             Resource.Error("Network error: ${e.localizedMessage}")
         }

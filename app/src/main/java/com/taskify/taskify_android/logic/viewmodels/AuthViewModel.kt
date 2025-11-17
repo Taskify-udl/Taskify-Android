@@ -379,28 +379,30 @@ class AuthViewModel(
         }
     }
 
-
     fun updateProfile(
-        context: Context,
         updates: Map<String, Any?>,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
         viewModelScope.launch {
-            val token = AuthPreferences.getTokenBlocking(context) ?: return@launch
-
-            when (val result = repository.updateProfile(context, updates)) {
+            when (val result = repository.updateProfile(updates)) {
                 is Resource.Success -> {
-                    saveLocalUser(result.data)
+                    val mapped = result.data.toUser()
+                    saveLocalUser(mapped)
+                    Log.d("AuthViewModel", "Profile updated successfully")
+                    _profileState.value = Resource.Success(mapped)
                     onSuccess()
                 }
 
-                is Resource.Error -> onError(result.message)
+                is Resource.Error -> {
+                    Log.e("AuthViewModel", "Error updating profile: ${result.message}")
+                    onError(result.message)
+                }
+
                 else -> {}
             }
         }
     }
-
 
     fun createService(
         title: String,
@@ -453,4 +455,5 @@ class AuthViewModel(
     fun resetState() {
         _authState.value = AuthUiState()
     }
+
 }

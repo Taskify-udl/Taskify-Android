@@ -8,7 +8,6 @@ import com.taskify.taskify_android.data.models.auth.RegisterRequest
 import com.taskify.taskify_android.data.models.auth.RegisterResponse
 import com.taskify.taskify_android.data.models.auth.UserResponse
 import com.taskify.taskify_android.data.models.entities.ProviderService
-import com.taskify.taskify_android.data.models.entities.User
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -35,10 +34,9 @@ interface ApiService {
     @GET("api/profile_detail")
     suspend fun getProfile(): Response<UserResponse>
 
-
     @PATCH("api/profile_detail")
     suspend fun updateProfile(
-        @Header("Authorization") token: String,
-        @Body body: Map<String, Any?>
-    ): Response<User>
+        @Body body: Map<String, @JvmSuppressWildcards Any?>
+    ): Response<UserResponse>
+
 }
