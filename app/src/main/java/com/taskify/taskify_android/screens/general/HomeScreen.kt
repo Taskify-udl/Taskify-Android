@@ -2,6 +2,7 @@ package com.taskify.taskify_android.screens.general
 
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -21,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,13 +35,22 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
+import com.taskify.taskify_android.data.models.entities.Provider
+import com.taskify.taskify_android.data.models.entities.ProviderService
+import com.taskify.taskify_android.data.models.entities.ServiceType
+import com.taskify.taskify_android.data.models.entities.User
 import com.taskify.taskify_android.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -146,7 +155,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                     )
 
                     1 -> FavoritesScreen(navController)
-                    2 -> BecomeProviderScreen()
+                    2 -> CreateServiceScreen(user, authViewModel, navController)
                     3 -> OrdersScreen()
                     4 -> SettingsScreen(navController = navController)
                 }
@@ -523,21 +532,6 @@ fun OffersScreenWithPopup(
     }
 }
 
-@Composable
-fun OfferCardItem(offerName: String, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .width(200.dp)
-            .height(100.dp)
-            .padding(8.dp)
-            .background(Color(0xFFD1E8FF), RoundedCornerShape(12.dp))
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = offerName, color = Dark, fontWeight = FontWeight.Medium)
-    }
-}
-
 // FavoritesScreen
 @Composable
 fun FavoritesScreen(navController: NavController) {
@@ -688,11 +682,6 @@ fun FavoritesScreen(navController: NavController) {
     }
 }
 
-
-// 🔹 Helper struktura jer Triple nema četvrti element
-data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
-
-
 // OrdersScreen
 @Composable
 fun OrdersScreen() {
@@ -830,18 +819,323 @@ fun OrdersScreen() {
     }
 }
 
-// Logo / Become Provider
 @Composable
-fun BecomeProviderScreen() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(
-            "Become a provider",
-            fontWeight = FontWeight.Bold,
-            fontSize = 24.sp,
-            color = TopGradientEnd
+fun CreateServiceScreen(
+    user: User? = null,
+    authViewModel: AuthViewModel,
+    navController: NavController
+) {
+    // si encara no ha arribat l'usuari
+    if (user == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+    Log.d("CreateServiceScreen", "User: $user")
+
+    // Rol del user
+    val isProvider = user is Provider
+
+    if (!isProvider) {
+        // ❌ CUSTOMER → Missatge "Become a provider"
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+                Text(
+                    "Become a provider",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 26.sp,
+                    color = TopGradientEnd
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Text(
+                    "To create and offer services, switch your account to Provider.",
+                    textAlign = TextAlign.Center,
+                    color = Dark.copy(alpha = 0.7f)
+                )
+
+                Spacer(Modifier.height(26.dp))
+
+                Button(
+                    onClick = { navController.navigate("becomeProviderScreen") },
+                    colors = ButtonDefaults.buttonColors(containerColor = TopGradientEnd)
+                ) {
+                    Text("Become Provider", color = Color.White)
+                }
+            }
+        }
+    } else {
+        // ✅ PROVIDER → Pantalla per gestionar serveis
+        ProviderServiceScreen(
+            authViewModel = authViewModel
         )
     }
 }
+
+@Composable
+fun ProviderServiceScreen(authViewModel: AuthViewModel) {
+
+    val context = LocalContext.current
+    val user by authViewModel.currentUser.collectAsState()
+    val provider = user as? Provider ?: return
+
+    var showCreateDialog by remember { mutableStateOf(false) }
+    var serviceToEdit by remember { mutableStateOf<ProviderService?>(null) }
+
+    val services = provider.services
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+
+        Text(
+            "My Services",
+            fontWeight = FontWeight.Bold,
+            fontSize = 26.sp,
+            color = TopGradientEnd
+        )
+
+        Spacer(Modifier.height(20.dp))
+
+        Button(
+            onClick = { showCreateDialog = true },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = TopGradientEnd)
+        ) {
+            Text("Create New Service", color = Color.White)
+        }
+
+        Spacer(Modifier.height(22.dp))
+
+        if (services.isEmpty()) {
+            Box(
+                Modifier.fillMaxSize(),
+                Alignment.Center
+            ) {
+                Text("You haven't created any services yet.", color = Color.Gray)
+            }
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                items(services) { service ->
+                    ServiceCard(
+                        service = service,
+                        onClick = { serviceToEdit = service }
+                    )
+                }
+            }
+        }
+    }
+
+    // ============= POPUP CREAR =============
+    if (showCreateDialog) {
+        ServiceDialog(
+            onDismiss = { showCreateDialog = false },
+            onCreate = { title, category, desc, price ->
+                authViewModel.createService(
+                    title = title,
+                    category = category.name,
+                    description = desc,
+                    price = price,
+                    context = context,
+                    onSuccess = {
+                        Toast.makeText(context, "Service created!", Toast.LENGTH_SHORT).show()
+                        showCreateDialog = false
+                    },
+                    onError = {
+                        Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                    }
+                )
+            },
+            onEdit = { _, _, _, _, _ -> }
+        )
+    }
+
+    // ============= POPUP EDITAR =============
+    if (serviceToEdit != null) {
+        val editService = serviceToEdit!!
+
+        ServiceDialog(
+            initial = editService,
+            onDismiss = { serviceToEdit = null },
+            onCreate = { _, _, _, _ -> },
+            onEdit = { serv, title, category, desc, price ->
+                authViewModel.updateService(
+                    serviceToUpdate = serv,
+                    newTitle = title,
+                    newCategory = category,
+                    newDescription = desc,
+                    newPrice = price,
+                    onSuccess = {
+                        Toast.makeText(context, "Service updated!", Toast.LENGTH_SHORT).show()
+                        serviceToEdit = null
+                    },
+                    onError = { error ->
+                        Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                    }
+                )
+            }
+        )
+    }
+}
+
+@Composable
+fun ServiceCard(
+    service: ProviderService,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color(0xFFF2F6FF))
+            .border(1.dp, TopGradientEnd.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
+            .clickable { onClick() }
+            .padding(18.dp)
+    ) {
+        Column {
+            // NAME
+            Text(
+                service.name,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = Dark
+            )
+
+            Spacer(Modifier.height(6.dp))
+
+            // CATEGORY (safe)
+            Text(
+                (service.category?.name ?: "OTHER").replace("_", " "),
+                fontSize = 14.sp,
+                color = TopGradientEnd
+            )
+
+            // DESCRIPTION (si existeix)
+            if (!service.description.isNullOrBlank()) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    service.description,
+                    fontSize = 14.sp,
+                    color = Color.DarkGray
+                )
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            // UPDATED DATE (safe)
+            val updatedDate = service.updatedAt?.toLocalDate()?.toString() ?: "N/A"
+
+            Text(
+                "Updated: $updatedDate",
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ServiceDialog(
+    initial: ProviderService? = null,
+    onDismiss: () -> Unit,
+    onCreate: (String, ServiceType, String, Int) -> Unit,
+    onEdit: (ProviderService, String, ServiceType, String, Int) -> Unit
+) {
+    var title by remember { mutableStateOf(initial?.name ?: "") }
+    var description by remember { mutableStateOf(initial?.description ?: "") }
+    var price by remember { mutableStateOf(initial?.price?.toString() ?: "") }
+
+    var selectedCategory by remember { mutableStateOf(initial?.category ?: ServiceType.OTHER) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = if (initial == null) "Create New Service" else "Edit Service",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Title") },
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description") }
+                )
+
+                // ---------------- ExposedDropdownMenuBox ----------------
+                var expanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedCategory.name.replace("_", " "),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Category") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier.menuAnchor() // important!
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        ServiceType.entries.forEach { type ->
+                            DropdownMenuItem(
+                                text = { Text(type.name.replace("_", " ")) },
+                                onClick = {
+                                    selectedCategory = type
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                OutlinedTextField(
+                    value = price,
+                    onValueChange = { input ->
+                        if (input.all { it.isDigit() }) {
+                            price = input
+                        }
+                    },
+                    label = { Text("Price (€)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                val p: Int = price.toInt()
+                if (initial == null) onCreate(title, selectedCategory, description, p)
+                else onEdit(initial, title, selectedCategory, description, p)
+            }) {
+                Text(if (initial == null) "Create" else "Save Changes")
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
 
 // Settings
 @Composable

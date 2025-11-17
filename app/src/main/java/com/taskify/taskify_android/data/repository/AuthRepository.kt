@@ -10,7 +10,6 @@ import com.taskify.taskify_android.data.models.auth.RegisterRequest
 import com.taskify.taskify_android.data.models.auth.RegisterResponse
 import com.taskify.taskify_android.data.models.auth.UserResponse
 import com.taskify.taskify_android.data.models.entities.ProviderService
-import com.taskify.taskify_android.data.models.entities.User
 import com.taskify.taskify_android.data.models.entities.UserDraft
 import com.taskify.taskify_android.data.network.ApiService
 import retrofit2.Response
@@ -139,7 +138,7 @@ class AuthRepository(private val api: ApiService) {
         title: String,
         category: String,
         description: String,
-        price: Double,
+        price: Int,
         context: Context,
         providerId: Long
     ): Response<ProviderService> {

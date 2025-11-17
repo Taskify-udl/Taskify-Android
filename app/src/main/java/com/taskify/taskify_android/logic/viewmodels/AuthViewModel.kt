@@ -12,6 +12,7 @@ import com.taskify.taskify_android.data.models.entities.Customer
 import com.taskify.taskify_android.data.models.entities.Provider
 import com.taskify.taskify_android.data.models.entities.ProviderService
 import com.taskify.taskify_android.data.models.entities.Role
+import com.taskify.taskify_android.data.models.entities.ServiceType
 import com.taskify.taskify_android.data.models.entities.User
 import com.taskify.taskify_android.data.models.entities.UserDraft
 import com.taskify.taskify_android.data.repository.AuthRepository
@@ -19,6 +20,7 @@ import com.taskify.taskify_android.data.repository.Resource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 
 // Representa l'estat de la UI en el procés de login
 data class AuthUiState(
@@ -404,11 +406,12 @@ class AuthViewModel(
         }
     }
 
+    /*
     fun createService(
         title: String,
         category: String,
         description: String,
-        price: Double,
+        price: Int,
         context: Context,
         onSuccess: (ProviderService) -> Unit,
         onError: (String) -> Unit
@@ -434,6 +437,14 @@ class AuthViewModel(
 
                 if (response.isSuccessful && response.body() != null) {
                     val service = response.body()!!
+                    val current = _currentUser.value
+                    if (current is Provider) {
+                        val updatedProvider = current.copy(
+                            services = current.services + service
+                        )
+                        _currentUser.value = updatedProvider
+                        _profileState.value = Resource.Success(updatedProvider)
+                    }
                     _createServiceState.value = Resource.Success(service)
                     onSuccess(service)
                 } else {
@@ -450,7 +461,120 @@ class AuthViewModel(
                 onError(error)
             }
         }
+    }*/
+    fun createService(
+        title: String,
+        category: String,
+        description: String,
+        price: Int,
+        context: Context,
+        onSuccess: (ProviderService) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            _createServiceState.value = Resource.Loading()
+            try {
+                val userId = currentUser.value?.id ?: authState.value.user?.id?.toLong() ?: 0L
+
+                // 🔹 Creem el servei localment abans de cridar l'API
+                val newService = ProviderService(
+                    id = 0, // id temporal fins que arribi de l'API
+                    name = title,
+                    category = ServiceType.valueOf(category.uppercase()),
+                    description = description,
+                    price = price,
+                    createdAt = LocalDateTime.now(),
+                    updatedAt = LocalDateTime.now(),
+                    providerId = userId
+                )
+
+                // 🔹 Actualitzem el Provider local amb el nou servei
+                val current = _currentUser.value
+                if (current is Provider) {
+                    val updatedProvider = current.copy(
+                        services = current.services + newService
+                    )
+                    _currentUser.value = updatedProvider
+                    _profileState.value = Resource.Success(updatedProvider)
+                }
+
+                // 🔹 Ara cridem l'API
+                val response = repository.createService(
+                    title = title,
+                    category = category,
+                    description = description,
+                    price = price,
+                    context = context,
+                    providerId = userId
+                )
+
+                if (response.isSuccessful && response.body() != null) {
+                    val serviceFromApi = response.body()!!
+
+                    // 🔹 Substituïm el servei local temporal amb l’ID real de l’API
+                    val currentProvider = _currentUser.value
+                    if (currentProvider is Provider) {
+                        val updatedServices = currentProvider.services.map {
+                            if (it === newService) serviceFromApi else it
+                        }
+                        val updatedProvider = currentProvider.copy(services = updatedServices)
+                        _currentUser.value = updatedProvider
+                        _profileState.value = Resource.Success(updatedProvider)
+                    }
+
+                    _createServiceState.value = Resource.Success(serviceFromApi)
+                    onSuccess(serviceFromApi)
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    val error = "Error creating service: ${response.code()} - $errorBody"
+                    _createServiceState.value = Resource.Error(error)
+                    onError(error)
+                }
+            } catch (e: Exception) {
+                val error = "Network error: ${e.localizedMessage}"
+                _createServiceState.value = Resource.Error(error)
+                onError(error)
+            }
+        }
     }
+
+
+    fun updateService(
+        serviceToUpdate: ProviderService,
+        newTitle: String,
+        newCategory: ServiceType,
+        newDescription: String,
+        newPrice: Int,
+        onSuccess: (ProviderService) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val current = _currentUser.value
+        if (current !is Provider) {
+            onError("Current user is not a provider")
+            return
+        }
+
+        val updatedService = serviceToUpdate.copy(
+            name = newTitle,
+            category = newCategory,
+            description = newDescription,
+            price = newPrice,
+            updatedAt = java.time.LocalDateTime.now()
+        )
+
+        // Actualitzar la llista de serveis
+        val updatedServices = current.services.map {
+            if (it.id == serviceToUpdate.id) updatedService else it
+        }
+
+        // Actualitzar el provider amb la nova llista
+        val updatedProvider = current.copy(services = updatedServices)
+        _currentUser.value = updatedProvider
+        _profileState.value = Resource.Success(updatedProvider)
+
+        onSuccess(updatedService)
+    }
+
 
     fun resetState() {
         _authState.value = AuthUiState()
