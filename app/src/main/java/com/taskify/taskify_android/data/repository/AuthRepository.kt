@@ -8,7 +8,9 @@ import com.taskify.taskify_android.data.models.auth.LoginRequest
 import com.taskify.taskify_android.data.models.auth.LoginResponse
 import com.taskify.taskify_android.data.models.auth.RegisterRequest
 import com.taskify.taskify_android.data.models.auth.RegisterResponse
+import com.taskify.taskify_android.data.models.auth.UserResponse
 import com.taskify.taskify_android.data.models.entities.ProviderService
+import com.taskify.taskify_android.data.models.entities.User
 import com.taskify.taskify_android.data.models.entities.UserDraft
 import com.taskify.taskify_android.data.network.ApiService
 import retrofit2.Response
@@ -93,6 +95,46 @@ class AuthRepository(private val api: ApiService) {
         }
     }
 
+    // ---------- GET PROFILE ----------
+    suspend fun getProfile(): Resource<UserResponse> {
+        return try {
+            val response = api.getProfile() // interceptor ja envia el token
+            if (response.isSuccessful) {
+                response.body()?.let { Resource.Success(it) }
+                    ?: Resource.Error("Empty profile response")
+            } else {
+                Resource.Error("Failed to load profile: ${response.code()}")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    // ---------- UPDATE PROFILE ----------
+    suspend fun updateProfile(
+        updates: Map<String, Any?>
+    ): Resource<UserResponse> {
+        Log.d("AuthRepository", "updateProfile updates: $updates")
+        return try {
+            val response = api.updateProfile(updates)
+            Log.d(
+                "AuthRepository",
+                "updateProfile response: ${response.code()} ${response.message()}"
+            )
+
+            if (response.isSuccessful) {
+                response.body()?.let { Resource.Success(it) }
+                    ?: Resource.Error("Empty update response")
+            } else {
+                Resource.Error("Error updating profile: ${response.code()}")
+            }
+
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    // ---------- CREATE SERVICE ----------
     suspend fun createService(
         title: String,
         category: String,

@@ -1,6 +1,7 @@
 package com.taskify.taskify_android.screens.general
 
 
+import android.util.Log
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -143,10 +144,11 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                         onSearchChange = { searchQuery = it },
                         navController = navController
                     )
+
                     1 -> FavoritesScreen(navController)
                     2 -> BecomeProviderScreen()
                     3 -> OrdersScreen()
-                    4 -> SettingsScreen()
+                    4 -> SettingsScreen(navController = navController)
                 }
             }
         }
@@ -326,7 +328,7 @@ fun OffersScreenWithPopup(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-// 🔸 Sponsored Ads (pravougaonici skoro pune širine, vertikalno skrolanje)
+        // 🔸 Sponsored Ads (pravougaonici skoro pune širine, vertikalno skrolanje)
         Text("Sponsored Ads", fontWeight = FontWeight.SemiBold, color = TopGradientEnd)
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -691,7 +693,6 @@ fun FavoritesScreen(navController: NavController) {
 data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
 
-
 // OrdersScreen
 @Composable
 fun OrdersScreen() {
@@ -832,14 +833,19 @@ fun OrdersScreen() {
 // Logo / Become Provider
 @Composable
 fun BecomeProviderScreen() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
-        Text("Become a provider", fontWeight = FontWeight.Bold, fontSize = 24.sp, color = TopGradientEnd)
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(
+            "Become a provider",
+            fontWeight = FontWeight.Bold,
+            fontSize = 24.sp,
+            color = TopGradientEnd
+        )
     }
 }
 
 // Settings
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -883,7 +889,7 @@ fun SettingsScreen() {
             // 👤 Profile Info
             item {
                 SettingItem("Profile Info") {
-                    // navController.navigate("profileInfo")
+                    navController.navigate("profileInfoScreen")
                 }
             }
 

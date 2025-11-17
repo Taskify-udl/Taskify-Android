@@ -41,11 +41,16 @@ fun NavigationGraph(navController: NavHostController) {
             ChatScreen(navController)
         }
 
+        composable("profileInfoScreen") {
+            ProfileInfoScreen(navController, authViewModel)
+        }
+
+
         composable("category/{categoryName}") { backStackEntry ->
             val categoryName = backStackEntry.arguments?.getString("categoryName") ?: "Unknown"
             CategoryScreen(
                 categoryName = categoryName,
-                navController = navController  //
+                navController = navController
             )
         }
 
@@ -61,16 +66,6 @@ fun NavigationGraph(navController: NavHostController) {
                 navController = navController
             )
         }
-
-        composable("chat") {
-            ChatScreen(navController)
-        }
-
-
-
-
-
-
-
+        0
     }
 }

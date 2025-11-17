@@ -745,7 +745,7 @@ fun StepCompanyInfo(
                 value = companyName,
                 onValueChange = onCompanyNameChange,
                 label = { Text("Company Name", color = Color.Black) },
-                placeholder = { Text("e.g. Techify Solutions", color = Color.Black.copy(alpha = 0.6f)) },
+                placeholder = { Text("e.g. Taskify Solutions", color = Color.Black.copy(alpha = 0.6f)) },
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 modifier = Modifier.fillMaxWidth()
