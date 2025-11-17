@@ -5,7 +5,7 @@ data class CreateServiceRequest(
     val description: String,
     val provider: Long,
     val category: String,
-    val price: Double,
+    val price: Int,
     val createdAt: String,
     val updatedAt: String
 )
