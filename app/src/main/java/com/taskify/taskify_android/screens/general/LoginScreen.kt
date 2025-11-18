@@ -68,6 +68,8 @@ import com.taskify.taskify_android.ui.theme.BgWhite
 import com.taskify.taskify_android.ui.theme.BrandBlue
 import com.taskify.taskify_android.ui.theme.TextDark
 import com.taskify.taskify_android.ui.theme.TextGray
+import androidx.compose.ui.res.stringResource
+import com.taskify.taskify_android.R
 
 @SuppressLint("ConfigurationScreenWidthHeight")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -84,6 +86,8 @@ fun LoginScreen(
     var localError by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
+    val resources = context.resources
+
     LaunchedEffect(loginState.isSuccess) {
         if (loginState.isSuccess) {
             navController.navigate("homeScreen") {
@@ -93,7 +97,6 @@ fun LoginScreen(
         }
     }
 
-    // 🔁 Animació del fons diagonal
     val infiniteTransition = rememberInfiniteTransition(label = "bgAnim")
     val progress by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -105,7 +108,6 @@ fun LoginScreen(
         label = "progressAnim"
     )
 
-    // 📏 Obtenim amplada i altura de la pantalla
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
@@ -117,7 +119,6 @@ fun LoginScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // 🔹 Degradats diagonals animats
             val startA = Offset(screenWidthPx * (1f - progress), 0f)
             val endA = Offset(0f, screenHeightPx * progress)
             val startB = Offset(0f, screenHeightPx * (1f - progress))
@@ -154,7 +155,6 @@ fun LoginScreen(
                     )
             )
 
-            // 💠 Card translúcida principal
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.85f)
@@ -175,14 +175,14 @@ fun LoginScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = "Welcome to Taskify",
+                        text = stringResource(R.string.welcome_title),
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextDark,
                         textAlign = TextAlign.Center
                     )
                     Text(
-                        text = "Boost your productivity with ease",
+                        text = stringResource(R.string.welcome_subtitle),
                         fontSize = 16.sp,
                         color = TextGray,
                         textAlign = TextAlign.Center
@@ -191,8 +191,8 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = username,
                         onValueChange = { username = it },
-                        label = { Text("Username", color = Color.Black) },
-                        placeholder = { Text("username", color = Color.Black.copy(alpha = 0.6f)) },
+                        label = { Text(stringResource(R.string.username_label), color = Color.Black) },
+                        placeholder = { Text(stringResource(R.string.username_placeholder), color = Color.Black.copy(alpha = 0.6f)) },
                         singleLine = true,
                         textStyle = LocalTextStyle.current.copy(color = Color.Black),
                         modifier = Modifier.fillMaxWidth()
@@ -201,8 +201,8 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
-                        label = { Text("Password", color = Color.Black) },
-                        placeholder = { Text("password", color = Color.Black.copy(alpha = 0.6f)) },
+                        label = { Text(stringResource(R.string.password_label), color = Color.Black) },
+                        placeholder = { Text(stringResource(R.string.password_placeholder), color = Color.Black.copy(alpha = 0.6f)) },
                         singleLine = true,
                         textStyle = LocalTextStyle.current.copy(color = Color.Black),
                         visualTransformation =
@@ -213,7 +213,7 @@ fun LoginScreen(
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
                                     imageVector = icon,
-                                    contentDescription = null,
+                                    contentDescription = stringResource(R.string.password_visibility_icon),
                                     tint = Color.Black
                                 )
                             }
@@ -221,20 +221,17 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-
-
-                    TextButton(onClick = { /* TODO: navigate to recovery */ }) {
+                    TextButton(onClick = { }) {
                         Text(
-                            text = "Forgot your password?",
+                            text = stringResource(R.string.forgot_password),
                             style = MaterialTheme.typography.labelSmall,
                             textDecoration = TextDecoration.Underline,
                             color = TextGray
                         )
                     }
 
-                    // 🔹 Botó Login
                     AnimatedButton(
-                        text = "Log In",
+                        text = stringResource(R.string.login_button),
                         onClick = {
                             localError = ""
                             val validationError = validateLogin(username, password)
@@ -265,10 +262,10 @@ fun LoginScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Don't have an account?", fontSize = 14.sp, color = TextGray)
+                        Text(stringResource(R.string.no_account), fontSize = 14.sp, color = TextGray)
                         Spacer(Modifier.width(4.dp))
                         Text(
-                            text = "Register",
+                            text = stringResource(R.string.register_button),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = BrandBlue,
@@ -288,7 +285,6 @@ fun LoginScreen(
                 }
             }
 
-            // 🔙 Mini card de fletxa enrere — adaptativa i visible
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -314,7 +310,7 @@ fun LoginScreen(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Go back",
+                    contentDescription = stringResource(R.string.go_back),
                     tint = Color.White.copy(alpha = 0.9f)
                 )
             }
@@ -326,27 +322,32 @@ fun LoginScreen(
 @Composable
 fun PasswordField(password: String, onPasswordChange: (String) -> Unit) {
     var passwordVisible by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     OutlinedTextField(
         value = password,
         onValueChange = onPasswordChange,
-        label = { Text("Password") },
+        label = { Text(stringResource(id = R.string.password)) },
         singleLine = true,
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
-            val image = if (passwordVisible)
-                Icons.Filled.Visibility
-            else
-                Icons.Filled.VisibilityOff
+            val image =
+                if (passwordVisible) Icons.Filled.Visibility
+                else Icons.Filled.VisibilityOff
 
             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                 Icon(
                     imageVector = image,
-                    contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                    contentDescription =
+                        if (passwordVisible)
+                            stringResource(id = R.string.hide_password)
+                        else
+                            stringResource(id = R.string.show_password)
                 )
             }
         },
         modifier = Modifier.fillMaxWidth()
     )
 }
+
 

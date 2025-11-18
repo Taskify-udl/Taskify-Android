@@ -1,0 +1,184 @@
+<resources>
+    <string name="app_name">Taskify</string>
+
+    <!-- Auth Screen -->
+    <string name="welcome_taskify">Bienvenido a Taskify</string>
+    <string name="connect_professionals">Conéctate con los mejores profesionales</string>
+    <string name="login_button">Iniciar sesión</string>
+    <string name="register">Registrarse</string>
+
+    <!---Login Screen-->
+    <string name="welcome_title">Bienvenido a Taskify</string>
+    <string name="welcome_subtitle">Mejora tu productividad con facilidad</string>
+
+    <string name="username_label">Nombre de usuario</string>
+    <string name="username_placeholder">nombre de usuario</string>
+
+    <string name="password_label">Contraseña</string>
+    <string name="password_placeholder">contraseña</string>
+    <string name="password_visibility_icon">Mostrar/ocultar contraseña</string>
+
+    <string name="forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="no_account">¿No tienes una cuenta?</string>
+    <string name="register_button">Registrarse</string>
+    <string name="go_back">Volver</string>
+    <string name="password">Contraseña</string>
+    <string name="show_password">Mostrar contraseña</string>
+    <string name="hide_password">Ocultar contraseña</string>
+
+    <!-- Register / Signup -->
+    <string name="already_have_account">¿Ya tienes una cuenta?</string>
+    <string name="login">Iniciar sesión</string>
+
+    <string name="create_account">Crear cuenta</string>
+    <string name="step_1_personal_info">Paso 1 de 2 - Información personal</string>
+    <string name="step_2_account_type">Paso 2 de 2 - Tipo de cuenta</string>
+    <string name="step_4_summary">Paso 4 de 4 \u2013 Resumen</string>
+    <string name="step_2_provider_type">Paso 2 de 2 - Tipo de proveedor</string>
+    <string name="step_3_company_details">Paso 3 de 5 - Detalles de la empresa</string>
+    <string name="step_4_code_verification">Paso 4 de 5 - Verificación de código</string>
+    <string name="step_5_summary">Paso 5 de 5 - Resumen</string>
+
+    <string name="full_name">Nombre completo</string>
+    <string name="full_name_placeholder">Tu nombre completo</string>
+
+    <string name="email_label">Correo electrónico</string>
+    <string name="email_placeholder">ejemplo@correo.com</string>
+
+    <string name="confirm_password_label">Confirmar contraseña</string>
+    <string name="confirm_password_placeholder">Repetir contraseña</string>
+
+    <string name="continue_arrow">Continuar \u2192</string>
+    <string name="back_arrow">\u2190 Atrás</string>
+
+    <string name="choose_usage">Elige cómo deseas usar Taskify</string>
+    <string name="select_account_type">Selecciona el tipo de cuenta que mejor se adapte a tus necesidades</string>
+
+    <string name="client_title">\uD83E\uDDD1\u200D\uD83D\uDCBC Cliente</string>
+    <string name="client_description">Quiero contratar servicios profesionales para mis necesidades</string>
+    <string name="client_bullet_1">\u2022 Buscar y contratar servicios</string>
+    <string name="client_bullet_2">\u2022 Gestionar pedidos</string>
+    <string name="client_bullet_3">\u2022 Dejar reseñas</string>
+
+    <string name="provider_title">\uD83E\uDDD1\u200D\uD83D\uDD27 Proveedor</string>
+    <string name="provider_description">Ofrezco servicios profesionales y quiero obtener clientes</string>
+    <string name="provider_bullet_1">\u2022 Publicar servicios</string>
+    <string name="provider_bullet_2">\u2022 Recibir solicitudes</string>
+    <string name="provider_bullet_3">\u2022 Gestionar tu negocio</string>
+
+    <string name="client_ready">\u2705 ¡Tu cuenta de cliente está lista!</string>
+    <string name="freelancer_ready">\u2705 ¡Tu cuenta de proveedor freelance está lista!</string>
+    <string name="company_ready">\u2705 ¡Tu cuenta de proveedor de empresa está lista!</string>
+
+    <!-- Name / Email formatting with placeholders -->
+    <string name="name_colon">Nombre: %1$s</string>
+    <string name="email_colon">Correo electrónico: %1$s</string>
+
+    <string name="account_type_client">Tipo de cuenta: Cliente \uD83D\uDDFA</string>
+    <string name="account_type_freelancer">Tipo de cuenta: Proveedor freelance \uD83D\uDDFA</string>
+    <string name="account_type_company">Tipo de cuenta: Proveedor de empresa \uD83C\uDFE2</string>
+
+    <string name="start_rocket">\uD83D\uDE80 Comenzar</string>
+
+    <!-- Company fields -->
+    <string name="create_company_account">Crear cuenta de empresa</string>
+    <string name="company_name">Nombre de la empresa</string>
+    <string name="company_name_placeholder">ej. Taskify Solutions</string>
+    <string name="cif">CIF</string>
+    <string name="cif_placeholder">ej. B12345678</string>
+    <string name="company_email">Correo electrónico de la empresa</string>
+    <string name="company_email_placeholder">ej. contacto@techify.com</string>
+
+    <string name="verify_company_email">Verificar correo de la empresa</string>
+    <string name="verification_sent_to">Se ha enviado un código de verificación a:</string>
+    <string name="enter_code">Introduce el código</string>
+    <string name="please_enter_valid_code">Por favor, introduce un código válido de 6 dígitos</string>
+    <string name="verify_arrow">Verificar \u2192</string>
+    <string name="provider_personalize">Personaliza tu perfil de proveedor</string>
+    <string name="freelancer_title">Freelance</string>
+    <string name="company_title">Empresa</string>
+    <string name="company_name_colon">Nombre de la empresa: %1$s</string>
+    <string name="cif_colon">CIF: %1$s</string>
+
+    <string name="company_registration_complete">Registro de empresa completado</string>
+
+    <!-- Tabs -->
+    <string name="tab_offers">Ofertas</string>
+    <string name="tab_favorites">Favoritos</string>
+    <string name="tab_taskify">Taskify</string>
+    <string name="tab_orders">Pedidos</string>
+    <string name="tab_settings">Configuración</string>
+
+    <!-- Top bar -->
+    <string name="notifications">Notificaciones</string>
+    <string name="chat">Chat</string>
+
+    <!-- Offers screen -->
+    <string name="search_placeholder">Buscar servicios...</string>
+
+    <!-- Buttons and messages -->
+    <string name="become_provider">Hazte proveedor</string>
+    <string name="become_provider_message">Para crear y ofrecer servicios, cambia tu cuenta a Proveedor.</string>
+    <string name="create_new_service">Crear nuevo servicio</string>
+    <string name="save_changes">Guardar cambios</string>
+    <string name="cancel">Cancelar</string>
+
+    <!-- Service categories -->
+    <string name="service_categories">Categorías de servicios</string>
+    <string name="plumber">Fontanero</string>
+    <string name="electrician">Electricista</string>
+    <string name="cleaner">Limpiador</string>
+    <string name="painter">Pintor</string>
+
+    <!-- Sponsored Ads -->
+    <string name="sponsored_ads">Anuncios patrocinados</string>
+    <string name="superclean">SuperClean - Servicios de limpieza profunda</string>
+    <string name="paintpro">PaintPro - Pintura interior y exterior</string>
+    <string name="quickfix">QuickFix - Fontanería 24/7</string>
+    <string name="ecoelectric">EcoElectric - Trabajos eléctricos sostenibles</string>
+
+    <!-- Popup -->
+    <string name="description_text">Descripción: Esta es una descripción de prueba para %1$s</string>
+    <string name="price_text">Precio: €%1$s</string>
+    <string name="reviews_text">Reseñas: ★★★★☆</string>
+    <string name="book_service">Reservar servicio</string>
+    <string name="close">Cerrar</string>
+
+    <!-- Favorites Screen -->
+    <string name="favorites_handyman_name">John Doe</string>
+    <string name="favorites_handyman_desc">Fontanero • HandyMan Pro</string>
+
+    <string name="favorites_electrician_name">Jane Smith</string>
+    <string name="favorites_electrician_desc">Electricista • ElectricFix</string>
+
+    <string name="favorites_cleaner_name">Mike Johnson</string>
+    <string name="favorites_cleaner_desc">Limpiador • QuickClean Team</string>
+
+    <string name="orders_title">Mis pedidos</string>
+
+    <string name="orders_john_name">John Doe</string>
+    <string name="orders_john_profession">Fontanero</string>
+    <string name="orders_john_date">Fecha: 14.10.2025</string>
+    <string name="orders_john_time">Hora: 14:00</string>
+
+    <string name="orders_jane_name">Jane Smith</string>
+    <string name="orders_jane_profession">Electricista</string>
+    <string name="orders_jane_date">Fecha: 15.10.2025</string>
+    <string name="orders_jane_time">Hora: 10:00</string>
+
+    <string name="orders_mike_name">Mike Johnson</string>
+    <string name="orders_mike_profession">Limpiador</string>
+    <string name="orders_mike_date">Fecha: 16.10.2025</string>
+    <string name="orders_mike_time">Hora: 09:30</string>
+
+    <string name="become_provider_title">Hazte proveedor</string>
+    <string name="become_provider_description">Para crear y ofrecer servicios, cambia tu cuenta a Proveedor.</string>
+    <string name="become_provider_button">Hazte proveedor</string>
+    <string name="user_logo">Logo de usuario</string>
+    <string name="account_settings">Configuración de la cuenta</string>
+    <string name="settings">Configuración</string>
+    <string name="profile_info">Información del perfil</string>
+    <string name="security">Seguridad</string>
+    <string name="dashboard">Panel</string>
+    <string name="logout">Cerrar sesión</string>
+</resources>

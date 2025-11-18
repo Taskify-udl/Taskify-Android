@@ -1,3 +1,185 @@
 <resources>
     <string name="app_name">Taskify</string>
+
+    <!-- Auth Screen -->
+    <string name="welcome_taskify">Welcome to Taskify</string>
+    <string name="connect_professionals">Connect with the best professionals</string>
+    <string name="login_button">Log In</string>
+    <string name="register">Register</string>
+
+    <!---Login Screen-->
+    <string name="welcome_title">Welcome to Taskify</string>
+    <string name="welcome_subtitle">Boost your productivity with ease</string>
+
+    <string name="username_label">Username</string>
+    <string name="username_placeholder">username</string>
+
+    <string name="password_label">Password</string>
+    <string name="password_placeholder">password</string>
+    <string name="password_visibility_icon">Toggle password visibility</string>
+
+    <string name="forgot_password">Forgot your password?</string>
+    <string name="no_account">Don\'t have an account?</string>
+    <string name="register_button">Register</string>
+    <string name="go_back">Go back</string>
+    <string name="password">Password</string>
+    <string name="show_password">Show password</string>
+    <string name="hide_password">Hide password</string>
+    <!-- Register / Signup -->
+    <string name="already_have_account">Already have an account?</string>
+    <string name="login">Login</string>
+
+
+    <string name="create_account">Create Account</string>
+    <string name="step_1_personal_info">Step 1 of 2 - Personal Information</string>
+    <string name="step_2_account_type">Step 2 of 2 - Account Type</string>
+    <string name="step_4_summary">Step 4 of 4 \u2013 Summary</string>
+    <string name="step_2_provider_type">Step 2 of 2 - Provider Type</string>
+    <string name="step_3_company_details">Step 3 of 5 - Company Details</string>
+    <string name="step_4_code_verification">Step 4 of 5 - Code Verification</string>
+    <string name="step_5_summary">Step 5 of 5 - Summary</string>
+
+    <string name="full_name">Full Name</string>
+    <string name="full_name_placeholder">Your full name</string>
+
+    <string name="email_label">Email</string>
+    <string name="email_placeholder">example@email.com</string>
+
+
+
+    <string name="confirm_password_label">Confirm Password</string>
+    <string name="confirm_password_placeholder">Repeat password</string>
+
+    <string name="continue_arrow">Continue \u2192</string>
+    <string name="back_arrow">\u2190 Back</string>
+
+    <string name="choose_usage">Choose how you want to use Taskify</string>
+    <string name="select_account_type">Select the account type that best fits your needs</string>
+
+    <string name="client_title">\uD83E\uDDD1\u200D\uD83D\uDCBC Client</string>
+    <string name="client_description">I want to hire professional services for my needs</string>
+    <string name="client_bullet_1">\u2022 Search and hire services</string>
+    <string name="client_bullet_2">\u2022 Manage orders</string>
+    <string name="client_bullet_3">\u2022 Leave reviews</string>
+
+    <string name="provider_title">\uD83E\uDDD1\u200D\uD83D\uDD27 Provider</string>
+    <string name="provider_description">I offer professional services and want to get clients</string>
+    <string name="provider_bullet_1">\u2022 Publish services</string>
+    <string name="provider_bullet_2">\u2022 Receive requests</string>
+    <string name="provider_bullet_3">\u2022 Manage your business</string>
+
+    <string name="client_ready">\u2705 Your client account is ready!</string>
+    <string name="freelancer_ready">\u2705 Your freelancer provider account is ready!</string>
+    <string name="company_ready">\u2705 Your company provider account is ready!</string>
+
+    <!-- Name / Email formatting with placeholders -->
+    <string name="name_colon">Name: %1$s</string>
+    <string name="email_colon">Email: %1$s</string>
+
+    <string name="account_type_client">Account Type: Client \uD83D\uDDFA</string>
+    <string name="account_type_freelancer">Account Type: Freelancer Provider \uD83D\uDDFA</string>
+    <string name="account_type_company">Account Type: Company Provider \uD83C\uDFE2</string>
+
+    <string name="start_rocket">\uD83D\uDE80 Start</string>
+
+    <!-- Company fields -->
+    <string name="create_company_account">Create Company Account</string>
+    <string name="company_name">Company Name</string>
+    <string name="company_name_placeholder">e.g. Taskify Solutions</string>
+    <string name="cif">CIF</string>
+    <string name="cif_placeholder">e.g. B12345678</string>
+    <string name="company_email">Company Email</string>
+    <string name="company_email_placeholder">e.g. contact@techify.com</string>
+
+    <string name="verify_company_email">Verify Company Email</string>
+    <string name="verification_sent_to">A verification code has been sent to:</string>
+    <string name="enter_code">Enter code</string>
+    <string name="please_enter_valid_code">Please enter a valid 6-digit code</string>
+    <string name="verify_arrow">Verify \u2192</string>
+    <string name="provider_personalize">Personalize your provider profile</string>
+    <string name="freelancer_title">Freelancer</string>
+    <string name="company_title">Company</string>
+    <string name="company_name_colon">Company Name: %1$s</string>
+    <string name="cif_colon">CIF: %1$s</string>
+
+    <string name="company_registration_complete">Company Registration Complete</string>
+    <!-- Tabs -->
+    <string name="tab_offers">Offers</string>
+    <string name="tab_favorites">Favorites</string>
+    <string name="tab_taskify">Taskify</string>
+    <string name="tab_orders">Orders</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- Top bar -->
+    <string name="notifications">Notifications</string>
+    <string name="chat">Chat</string>
+
+    <!-- Offers screen -->
+    <string name="search_placeholder">Search services...</string>
+
+    <!-- Buttons and messages -->
+    <string name="become_provider">Become Provider</string>
+    <string name="become_provider_message">To create and offer services, switch your account to Provider.</string>
+    <string name="create_new_service">Create New Service</string>
+    <string name="save_changes">Save Changes</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Service categories -->
+    <string name="service_categories">Service Categories</string>
+    <string name="plumber">Plumber</string>
+    <string name="electrician">Electrician</string>
+    <string name="cleaner">Cleaner</string>
+    <string name="painter">Painter</string>
+
+    <!-- Sponsored Ads -->
+    <string name="sponsored_ads">Sponsored Ads</string>
+    <string name="superclean">SuperClean - Deep Cleaning Services</string>
+    <string name="paintpro">PaintPro - Interior &amp; Exterior Painting</string>
+    <string name="quickfix">QuickFix - 24/7 Plumbing</string>
+    <string name="ecoelectric">EcoElectric - Sustainable Electrical Work</string>
+
+    <!-- Popup -->
+    <string name="description_text">Description: This is a demo description for %1$s</string>
+    <string name="price_text">Price: €%1$s</string>
+    <string name="reviews_text">Reviews: ★★★★☆</string>
+    <string name="book_service">Book Service</string>
+    <string name="close">Close</string>
+
+    <!-- Favorites Screen -->
+    <string name="favorites_handyman_name">John Doe</string>
+    <string name="favorites_handyman_desc">Plumber • HandyMan Pro</string>
+
+    <string name="favorites_electrician_name">Jane Smith</string>
+    <string name="favorites_electrician_desc">Electrician • ElectricFix</string>
+
+    <string name="favorites_cleaner_name">Mike Johnson</string>
+    <string name="favorites_cleaner_desc">Cleaner • QuickClean Team</string>
+    <string name="orders_title">My Orders</string>
+
+    <string name="orders_john_name">John Doe</string>
+    <string name="orders_john_profession">Plumber</string>
+    <string name="orders_john_date">Date: 14.10.2025</string>
+    <string name="orders_john_time">Time: 14:00</string>
+
+    <string name="orders_jane_name">Jane Smith</string>
+    <string name="orders_jane_profession">Electrician</string>
+    <string name="orders_jane_date">Date: 15.10.2025</string>
+    <string name="orders_jane_time">Time: 10:00</string>
+
+    <string name="orders_mike_name">Mike Johnson</string>
+    <string name="orders_mike_profession">Cleaner</string>
+    <string name="orders_mike_date">Date: 16.10.2025</string>
+    <string name="orders_mike_time">Time: 09:30</string>
+    <string name="become_provider_title">Become a provider</string>
+    <string name="become_provider_description">To create and offer services, switch your account to Provider.</string>
+    <string name="become_provider_button">Become Provider</string>
+    <string name="user_logo">User Logo</string>
+    <string name="account_settings">Account Settings</string>
+    <string name="settings">Settings</string>
+    <string name="profile_info">Profile Info</string>
+    <string name="security">Security</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="logout">Logout</string>
+
+
 </resources>

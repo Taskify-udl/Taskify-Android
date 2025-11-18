@@ -1,0 +1,185 @@
+<resources>
+    <string name="app_name">Taskify</string>
+
+    <!-- Auth Screen -->
+    <string name="welcome_taskify">Benvingut a Taskify</string>
+    <string name="connect_professionals">Connecta amb els millors professionals</string>
+    <string name="login_button">Inicia sessi\'o</string>
+    <string name="register">Registrar-se</string>
+
+    <!---Login Screen-->
+    <string name="welcome_title">Benvingut a Taskify</string>
+    <string name="welcome_subtitle">Millora la teva productivitat amb facilitat</string>
+
+    <string name="username_label">Nom d\'usuari</string>
+    <string name="username_placeholder">nom d\'usuari</string>
+
+    <string name="password_label">Contrasenya</string>
+    <string name="password_placeholder">contrasenya</string>
+    <string name="password_visibility_icon">Mostra/amaga la contrasenya</string>
+
+    <string name="forgot_password">Has oblidat la contrasenya?</string>
+    <string name="no_account">No tens cap compte?</string>
+    <string name="register_button">Registrar-se</string>
+    <string name="go_back">Torna enrere</string>
+    <string name="password">Contrasenya</string>
+    <string name="show_password">Mostra la contrasenya</string>
+    <string name="hide_password">Amaga la contrasenya</string>
+
+    <!-- Register / Signup -->
+    <string name="already_have_account">Ja tens un compte?</string>
+    <string name="login">Inicia sessi\'o</string>
+
+    <string name="create_account">Crea un compte</string>
+    <string name="step_1_personal_info">Pas 1 de 2 - Informaci\'o personal</string>
+    <string name="step_2_account_type">Pas 2 de 2 - Tipus de compte</string>
+    <string name="step_4_summary">Pas 4 de 4 \u2013 Resum</string>
+    <string name="step_2_provider_type">Pas 2 de 2 - Tipus de prove\'idor</string>
+    <string name="step_3_company_details">Pas 3 de 5 - Detalls de l\'empresa</string>
+    <string name="step_4_code_verification">Pas 4 de 5 - Verificaci\'o del codi</string>
+    <string name="step_5_summary">Pas 5 de 5 - Resum</string>
+
+    <string name="full_name">Nom complet</string>
+    <string name="full_name_placeholder">El teu nom complet</string>
+
+    <string name="email_label">Correu electr\ònic</string>
+    <string name="email_placeholder">exemple@correu.com</string>
+
+    <string name="confirm_password_label">Confirma la contrasenya</string>
+    <string name="confirm_password_placeholder">Repeteix la contrasenya</string>
+
+    <string name="continue_arrow">Continua \u2192</string>
+    <string name="back_arrow">\u2190 Enrere</string>
+
+    <string name="choose_usage">Tria com vols utilitzar Taskify</string>
+    <string name="select_account_type">Selecciona el tipus de compte que millor s\'adapti a les teves necessitats</string>
+
+    <string name="client_title">\uD83E\uDDD1\u200D\uD83D\uDCBC Client</string>
+    <string name="client_description">Vull contractar serveis professionals per a les meves necessitats</string>
+    <string name="client_bullet_1">\u2022 Cerca i contracta serveis</string>
+    <string name="client_bullet_2">\u2022 Gestiona comandes</string>
+    <string name="client_bullet_3">\u2022 Deixa ressenyes</string>
+
+    <string name="provider_title">\uD83E\uDDD1\u200D\uD83D\uDD27 Prove\'idor</string>
+    <string name="provider_description">Ofereixo serveis professionals i vull aconseguir clients</string>
+    <string name="provider_bullet_1">\u2022 Publica serveis</string>
+    <string name="provider_bullet_2">\u2022 Rep sol\·licituds</string>
+    <string name="provider_bullet_3">\u2022 Gestiona el teu negoci</string>
+
+    <string name="client_ready">\u2705 El teu compte de client est\'a llest!</string>
+    <string name="freelancer_ready">\u2705 El teu compte de prove\'idor freelance est\'a llest!</string>
+    <string name="company_ready">\u2705 El teu compte de prove\'idor d\'empresa est\'a llest!</string>
+
+    <!-- Name / Email formatting with placeholders -->
+    <string name="name_colon">Nom: %1$s</string>
+    <string name="email_colon">Correu electr\ònic: %1$s</string>
+
+    <string name="account_type_client">Tipus de compte: Client \uD83D\uDDFA</string>
+    <string name="account_type_freelancer">Tipus de compte: Prove\'idor freelance \uD83D\uDDFA</string>
+    <string name="account_type_company">Tipus de compte: Prove\'idor d\'empresa \uD83C\uDFE2</string>
+
+    <string name="start_rocket">\uD83D\uDE80 Comen\c;a</string>
+
+    <!-- Company fields -->
+    <string name="create_company_account">Crea un compte d\'empresa</string>
+    <string name="company_name">Nom de l\'empresa</string>
+    <string name="company_name_placeholder">ex. Taskify Solutions</string>
+    <string name="cif">CIF</string>
+    <string name="cif_placeholder">ex. B12345678</string>
+    <string name="company_email">Correu electr\ònic de l\'empresa</string>
+    <string name="company_email_placeholder">ex. contacte@techify.com</string>
+
+    <string name="verify_company_email">Verifica el correu de l\'empresa</string>
+    <string name="verification_sent_to">S\'ha enviat un codi de verificaci\'o a:</string>
+    <string name="enter_code">Introdueix el codi</string>
+    <string name="please_enter_valid_code">Si us plau, introdueix un codi vàlid de 6 dígits</string>
+    <string name="verify_arrow">Verifica \u2192</string>
+    <string name="provider_personalize">Personalitza el teu perfil de prove\'idor</string>
+    <string name="freelancer_title">Freelance</string>
+    <string name="company_title">Empresa</string>
+    <string name="company_name_colon">Nom de l\'empresa: %1$s</string>
+    <string name="cif_colon">CIF: %1$s</string>
+
+    <string name="company_registration_complete">Registre de l\'empresa completat</string>
+
+    <!-- Tabs -->
+    <string name="tab_offers">Ofertes</string>
+    <string name="tab_favorites">Preferits</string>
+    <string name="tab_taskify">Taskify</string>
+    <string name="tab_orders">Comandes</string>
+    <string name="tab_settings">Configuraci\'o</string>
+
+    <!-- Top bar -->
+    <string name="notifications">Notificacions</string>
+    <string name="chat">Xat</string>
+
+    <!-- Offers screen -->
+    <string name="search_placeholder">Cerca serveis...</string>
+
+    <!-- Buttons and messages -->
+    <string name="become_provider">Fes-te prove\'idor</string>
+    <string name="become_provider_message">Per crear i oferir serveis, canvia el teu compte a Prove\'idor.</string>
+    <string name="create_new_service">Crea un nou servei</string>
+    <string name="save_changes">Desa canvis</string>
+    <string name="cancel">Cancel·la</string>
+
+    <!-- Service categories -->
+    <string name="service_categories">Categories de serveis</string>
+    <string name="plumber">Paleta</string>
+    <string name="electrician">Electricista</string>
+    <string name="cleaner">Netejador</string>
+    <string name="painter">Pintor</string>
+
+    <!-- Sponsored Ads -->
+    <string name="sponsored_ads">Anuncis patrocinats</string>
+    <string name="superclean">SuperClean - Serveis de neteja profunda</string>
+    <string name="paintpro">PaintPro - Pintura interior i exterior</string>
+    <string name="quickfix">QuickFix - Serveis de lampisteria 24/7</string>
+    <string name="ecoelectric">EcoElectric - Treballs elèctrics sostenibles</string>
+
+    <!-- Popup -->
+    <string name="description_text">Descripci\'o: Aquesta és una descripci\'o de prova per a %1$s</string>
+    <string name="price_text">Preu: €%1$s</string>
+    <string name="reviews_text">Ressenyes: ★★★★☆</string>
+    <string name="book_service">Reserva el servei</string>
+    <string name="close">Tanca</string>
+
+    <!-- Favorites Screen -->
+    <string name="favorites_handyman_name">John Doe</string>
+    <string name="favorites_handyman_desc">Paleta • HandyMan Pro</string>
+
+    <string name="favorites_electrician_name">Jane Smith</string>
+    <string name="favorites_electrician_desc">Electricista • ElectricFix</string>
+
+    <string name="favorites_cleaner_name">Mike Johnson</string>
+    <string name="favorites_cleaner_desc">Netejador • QuickClean Team</string>
+
+    <string name="orders_title">Les meves comandes</string>
+
+    <string name="orders_john_name">John Doe</string>
+    <string name="orders_john_profession">Paleta</string>
+    <string name="orders_john_date">Data: 14.10.2025</string>
+    <string name="orders_john_time">Hora: 14:00</string>
+
+    <string name="orders_jane_name">Jane Smith</string>
+    <string name="orders_jane_profession">Electricista</string>
+    <string name="orders_jane_date">Data: 15.10.2025</string>
+    <string name="orders_jane_time">Hora: 10:00</string>
+
+    <string name="orders_mike_name">Mike Johnson</string>
+    <string name="orders_mike_profession">Netejador</string>
+    <string name="orders_mike_date">Data: 16.10.2025</string>
+    <string name="orders_mike_time">Hora: 09:30</string>
+
+    <string name="become_provider_title">Fes-te prove\'idor</string>
+    <string name="become_provider_description">Per crear i oferir serveis, canvia el teu compte a Prove\'idor.</string>
+    <string name="become_provider_button">Fes-te prove\'idor</string>
+    <string name="user_logo">Logo d\'usuari</string>
+    <string name="account_settings">Configuraci\'o del compte</string>
+    <string name="settings">Configuraci\'o</string>
+    <string name="profile_info">Informaci\'o del perfil</string>
+    <string name="security">Seguretat</string>
+    <string name="dashboard">Panell</string>
+    <string name="logout">Tanca sessi\'o</string>
+
+</resources>
