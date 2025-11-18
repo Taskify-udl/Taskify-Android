@@ -186,7 +186,9 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                             companyEmail = userDraft.companyEmail,
                             onCompanyNameChange = { userDraft = userDraft.copy(companyName = it) },
                             onCifChange = { userDraft = userDraft.copy(cif = it) },
-                            onCompanyEmailChange = { userDraft = userDraft.copy(companyEmail = it) },
+                            onCompanyEmailChange = {
+                                userDraft = userDraft.copy(companyEmail = it)
+                            },
                             onContinue = {
                                 val error = validateCompanyInfo(
                                     userDraft.companyName,
@@ -256,37 +258,6 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                     }
                 }
             }
-
-            // 🔙 Mini back arrow
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .offset(y = configuration.screenHeightDp.dp * 0.38f)
-                    .width(configuration.screenWidthDp.dp * 0.22f)
-                    .height(configuration.screenHeightDp.dp * 0.07f)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(
-                        color = Color.White.copy(alpha = 0.15f),
-                        shape = RoundedCornerShape(16.dp)
-                    )
-                    .border(
-                        width = 1.dp,
-                        color = Color.White.copy(alpha = 0.25f),
-                        shape = RoundedCornerShape(16.dp)
-                    )
-                    .clickable {
-                        navController.navigate("authScreen") {
-                            popUpTo("register") { inclusive = true }
-                        }
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Go back",
-                    tint = Color.White.copy(alpha = 0.9f)
-                )
-            }
         }
     }
 }
@@ -340,7 +311,12 @@ fun StepPersonalInfo(
                 value = userDraft.username,
                 onValueChange = { onUpdate(userDraft.copy(username = it)) },
                 label = { Text("Username", color = Color.Black) },
-                placeholder = { Text("At least 4 characters", color = Color.Black.copy(alpha = 0.6f)) },
+                placeholder = {
+                    Text(
+                        "At least 4 characters",
+                        color = Color.Black.copy(alpha = 0.6f)
+                    )
+                },
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 modifier = Modifier.fillMaxWidth()
@@ -365,7 +341,8 @@ fun StepPersonalInfo(
                 textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 visualTransformation = if (passVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
-                    val icon = if (passVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    val icon =
+                        if (passVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { passVisible = !passVisible }) {
                         Icon(icon, null, tint = Color.Black)
                     }
@@ -382,7 +359,8 @@ fun StepPersonalInfo(
                 textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 visualTransformation = if (confirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
-                    val icon = if (confirmVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    val icon =
+                        if (confirmVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { confirmVisible = !confirmVisible }) {
                         Icon(icon, null, tint = Color.Black)
                     }
@@ -745,7 +723,12 @@ fun StepCompanyInfo(
                 value = companyName,
                 onValueChange = onCompanyNameChange,
                 label = { Text("Company Name", color = Color.Black) },
-                placeholder = { Text("e.g. Taskify Solutions", color = Color.Black.copy(alpha = 0.6f)) },
+                placeholder = {
+                    Text(
+                        "e.g. Taskify Solutions",
+                        color = Color.Black.copy(alpha = 0.6f)
+                    )
+                },
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 modifier = Modifier.fillMaxWidth()
@@ -765,7 +748,12 @@ fun StepCompanyInfo(
                 value = companyEmail,
                 onValueChange = onCompanyEmailChange,
                 label = { Text("Company Email", color = Color.Black) },
-                placeholder = { Text("e.g. contact@techify.com", color = Color.Black.copy(alpha = 0.6f)) },
+                placeholder = {
+                    Text(
+                        "e.g. contact@techify.com",
+                        color = Color.Black.copy(alpha = 0.6f)
+                    )
+                },
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 modifier = Modifier.fillMaxWidth()

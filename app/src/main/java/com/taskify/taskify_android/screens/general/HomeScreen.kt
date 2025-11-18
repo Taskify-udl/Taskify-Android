@@ -835,7 +835,10 @@ fun CreateServiceScreen(
     Log.d("CreateServiceScreen", "User: $user")
 
     // Rol del user
-    val isProvider = user is Provider
+    val isProvider = user is Provider || user.role.toString() == "PROVIDER"
+    Log.d("CreateServiceScreen", "Is Provider: $isProvider")
+    Log.d("CreateServiceScreen", "User Role: ${user.role}")
+
 
     if (!isProvider) {
         // ❌ CUSTOMER → Missatge "Become a provider"
