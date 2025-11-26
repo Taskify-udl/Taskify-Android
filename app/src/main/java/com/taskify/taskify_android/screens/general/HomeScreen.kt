@@ -1,6 +1,9 @@
 package com.taskify.taskify_android.screens.general
 
 
+import android.content.Context
+import android.content.res.Configuration
+import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.RepeatMode
@@ -53,6 +56,7 @@ import com.taskify.taskify_android.data.models.entities.ServiceType
 import com.taskify.taskify_android.data.models.entities.User
 import com.taskify.taskify_android.ui.theme.*
 import androidx.compose.ui.res.stringResource
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1220,6 +1224,51 @@ fun SettingsScreen(navController: NavController) {
             }
         }
     }
+    // Dialog za izbor jezika
+    if (showLanguageDialog) {
+        AlertDialog(
+            onDismissRequest = { showLanguageDialog = false },
+            title = { Text("Select Language") },
+            text = {
+                Column {
+                    Text("English", modifier = Modifier.clickable {
+                        updateLocale(context, "en")
+                        showLanguageDialog = false
+                    })
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Català", modifier = Modifier.clickable {
+                        updateLocale(context, "ca") // katalonski
+                        showLanguageDialog = false
+                    })
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Español", modifier = Modifier.clickable {
+                        updateLocale(context, "es") // španski
+                        showLanguageDialog = false
+                    })
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showLanguageDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+fun updateLocale(context: Context, languageCode: String) {
+    val locale = Locale(languageCode)
+    Locale.setDefault(locale)
+
+    val config = Configuration(context.resources.configuration)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        config.setLocale(locale)
+    } else {
+        @Suppress("DEPRECATION")
+        config.locale = locale
+    }
+
+    context.resources.updateConfiguration(config, context.resources.displayMetrics)
 }
 
 // 🔹 Komponenta za svaku stavku u listi
