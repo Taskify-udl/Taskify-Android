@@ -1,6 +1,9 @@
 package com.taskify.taskify_android.screens.general
 
 
+import android.content.Context
+import android.content.res.Configuration
+import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.RepeatMode
@@ -26,7 +29,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.taskify.taskify_android.R
 import com.taskify.taskify_android.logic.viewmodels.AuthViewModel
 import com.taskify.taskify_android.ui.theme.Dark
 import com.taskify.taskify_android.ui.theme.TopGradientEnd
@@ -52,6 +54,9 @@ import com.taskify.taskify_android.data.models.entities.ProviderService
 import com.taskify.taskify_android.data.models.entities.ServiceType
 import com.taskify.taskify_android.data.models.entities.User
 import com.taskify.taskify_android.ui.theme.*
+import androidx.compose.ui.res.stringResource
+import com.taskify.taskify_android.R
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,9 +65,15 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
     var selectedTab by remember { mutableIntStateOf(0) }
     var searchQuery by remember { mutableStateOf("") }
 
-    val tabs = listOf("Offers", "Favorites", "Taskify", "Orders", "Settings")
+    val context = LocalContext.current
+    val tabs = listOf(
+        context.getString(R.string.tab_offers),
+        context.getString(R.string.tab_favorites),
+        context.getString(R.string.tab_taskify),
+        context.getString(R.string.tab_orders),
+        context.getString(R.string.tab_settings)
+    )
 
-    // 🌈 Animated gradient background (el deixem igual)
     val infiniteTransition = rememberInfiniteTransition(label = "homeBgAnim")
     val progress by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -102,7 +113,6 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                 )
         )
 
-        // 🔹 Scaffold amb topBar i bottomBar
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
@@ -117,7 +127,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                         IconButton(onClick = { /* TODO: Notifications */ }) {
                             Icon(
                                 imageVector = Icons.Default.Notifications,
-                                contentDescription = "Notifications",
+                                contentDescription = context.getString(R.string.notifications),
                                 tint = BrandBlue
                             )
                         }
@@ -126,7 +136,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                         IconButton(onClick = { /* TODO: Chat */ }) {
                             Icon(
                                 imageVector = Icons.Default.Chat,
-                                contentDescription = "Chat",
+                                contentDescription = context.getString(R.string.chat),
                                 tint = BrandBlue
                             )
                         }
@@ -1143,6 +1153,9 @@ fun ServiceDialog(
 // Settings
 @Composable
 fun SettingsScreen(navController: NavController) {
+    val context = LocalContext.current
+    var showLanguageDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1152,7 +1165,7 @@ fun SettingsScreen(navController: NavController) {
         // 👤 Profilna slika centrirana
         Image(
             painter = painterResource(id = R.drawable.profilepic),
-            contentDescription = "User Logo",
+            contentDescription = stringResource(R.string.user_logo),
             modifier = Modifier
                 .size(100.dp)
                 .clip(CircleShape)
@@ -1162,7 +1175,7 @@ fun SettingsScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Account Settings",
+            text = stringResource(R.string.account_settings),
             fontWeight = FontWeight.Bold,
             color = TopGradientEnd,
             fontSize = 20.sp
@@ -1176,42 +1189,82 @@ fun SettingsScreen(navController: NavController) {
                 .weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // ⚙️ Settings
             item {
-                SettingItem("Settings") {
-                    // navController.navigate("settingsDetail") // primjer
-                }
+                SettingItem(stringResource(R.string.settings)) {}
             }
 
-            // 👤 Profile Info
             item {
-                SettingItem("Profile Info") {
+                SettingItem(stringResource(R.string.profile_info)) {
                     navController.navigate("profileInfoScreen")
                 }
             }
 
-            // 🔐 Security
             item {
-                SettingItem("Security") {
-                    // navController.navigate("security")
+                SettingItem(stringResource(R.string.security)) {}
+            }
+
+            item {
+                SettingItem(stringResource(R.string.dashboard)) {}
+            }
+
+            // 🌐 Promjena jezika
+            item {
+                SettingItem("Change Language") {
+                    showLanguageDialog = true
                 }
             }
 
-            // 📊 Dashboard
             item {
-                SettingItem("Dashboard") {
-                    // navController.navigate("dashboard")
-                }
-            }
-
-            // 🚪 Logout
-            item {
-                SettingItem("Logout", highlight = true) {
-                    // handle logout logic
-                }
+                SettingItem(stringResource(R.string.logout), highlight = true) {}
             }
         }
     }
+
+    // Dialog za izbor jezika
+    if (showLanguageDialog) {
+        AlertDialog(
+            onDismissRequest = { showLanguageDialog = false },
+            title = { Text("Select Language") },
+            text = {
+                Column {
+                    Text("English", modifier = Modifier.clickable {
+                        updateLocale(context, "en")
+                        showLanguageDialog = false
+                    })
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Català", modifier = Modifier.clickable {
+                        updateLocale(context, "ca") // katalonski
+                        showLanguageDialog = false
+                    })
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Español", modifier = Modifier.clickable {
+                        updateLocale(context, "es") // španski
+                        showLanguageDialog = false
+                    })
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showLanguageDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+fun updateLocale(context: Context, languageCode: String) {
+    val locale = Locale(languageCode)
+    Locale.setDefault(locale)
+
+    val config = Configuration(context.resources.configuration)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        config.setLocale(locale)
+    } else {
+        @Suppress("DEPRECATION")
+        config.locale = locale
+    }
+
+    context.resources.updateConfiguration(config, context.resources.displayMetrics)
 }
 
 // 🔹 Komponenta za svaku stavku u listi
