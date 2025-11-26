@@ -4,7 +4,7 @@
     <!-- Auth Screen -->
     <string name="welcome_taskify">Benvingut a Taskify</string>
     <string name="connect_professionals">Connecta amb els millors professionals</string>
-    <string name="login_button">Inicia sessi\'o</string>
+    <string name="login_button">Iniciar sessió</string>
     <string name="register">Registrar-se</string>
 
     <!---Login Screen-->

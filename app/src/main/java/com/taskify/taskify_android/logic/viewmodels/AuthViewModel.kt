@@ -158,15 +158,34 @@ class AuthViewModel(
     fun logout(context: Context) {
         viewModelScope.launch {
             _authState.value = AuthUiState(isLoading = true)
+
+            AuthPreferences.clearToken(context)
+
+            _currentUser.value = null
+            _profileState.value = Resource.Loading()
+
+            _authState.value = AuthUiState(isSuccess = true)
+
+            /*
+            _authState.value = AuthUiState(isSuccess = true)
             val success = repository.logout(context)
+
+
             if (success) {
+                AuthPreferences.clearToken(context)
+
+                _currentUser.value = null
+                _profileState.value = Resource.Loading()
+
                 _authState.value = AuthUiState(isSuccess = true)
+
+                Log.d("AuthViewModel", "✅ Logout complet: token i usuari esborrats")
             } else {
                 _authState.value = AuthUiState(
                     isLoading = false,
                     error = "Logout failed"
                 )
-            }
+            }*/
         }
     }
 
@@ -189,7 +208,7 @@ class AuthViewModel(
                     val roleString = registerResponse.user.role.uppercase()
                     val role = Role.valueOf(roleString)
 
-                    val now = java.time.LocalDateTime.now()
+                    val now = LocalDateTime.now()
 
                     // 🔧 Creem el tipus d'usuari segons el role
                     val user: User = when (role) {
@@ -313,7 +332,7 @@ class AuthViewModel(
                 // Convertim UserResponse a Provider/Customer segons el role
                 val body = result.data
                 val role = Role.valueOf(body.role.uppercase())
-                val now = java.time.LocalDateTime.now()
+                val now = LocalDateTime.now()
 
                 val user: User = when (role) {
                     Role.FREELANCER, Role.COMPANY_ADMIN, Role.COMPANY_WORKER, Role.PROVIDER -> Provider(
@@ -464,78 +483,41 @@ class AuthViewModel(
     }*/
     fun createService(
         title: String,
-        category: String,
+        category: ServiceType,
         description: String,
         price: Int,
-        context: Context,
         onSuccess: (ProviderService) -> Unit,
         onError: (String) -> Unit
     ) {
-        viewModelScope.launch {
-            _createServiceState.value = Resource.Loading()
-            try {
-                val userId = currentUser.value?.id ?: authState.value.user?.id?.toLong() ?: 0L
-
-                // 🔹 Creem el servei localment abans de cridar l'API
-                val newService = ProviderService(
-                    id = 0, // id temporal fins que arribi de l'API
-                    name = title,
-                    category = ServiceType.valueOf(category.uppercase()),
-                    description = description,
-                    price = price,
-                    createdAt = LocalDateTime.now(),
-                    updatedAt = LocalDateTime.now(),
-                    providerId = userId
-                )
-
-                // 🔹 Actualitzem el Provider local amb el nou servei
-                val current = _currentUser.value
-                if (current is Provider) {
-                    val updatedProvider = current.copy(
-                        services = current.services + newService
-                    )
-                    _currentUser.value = updatedProvider
-                    _profileState.value = Resource.Success(updatedProvider)
-                }
-
-                // 🔹 Ara cridem l'API
-                val response = repository.createService(
-                    title = title,
-                    category = category,
-                    description = description,
-                    price = price,
-                    context = context,
-                    providerId = userId
-                )
-
-                if (response.isSuccessful && response.body() != null) {
-                    val serviceFromApi = response.body()!!
-
-                    // 🔹 Substituïm el servei local temporal amb l’ID real de l’API
-                    val currentProvider = _currentUser.value
-                    if (currentProvider is Provider) {
-                        val updatedServices = currentProvider.services.map {
-                            if (it === newService) serviceFromApi else it
-                        }
-                        val updatedProvider = currentProvider.copy(services = updatedServices)
-                        _currentUser.value = updatedProvider
-                        _profileState.value = Resource.Success(updatedProvider)
-                    }
-
-                    _createServiceState.value = Resource.Success(serviceFromApi)
-                    onSuccess(serviceFromApi)
-                } else {
-                    val errorBody = response.errorBody()?.string()
-                    val error = "Error creating service: ${response.code()} - $errorBody"
-                    _createServiceState.value = Resource.Error(error)
-                    onError(error)
-                }
-            } catch (e: Exception) {
-                val error = "Network error: ${e.localizedMessage}"
-                _createServiceState.value = Resource.Error(error)
-                onError(error)
-            }
+        val current = _currentUser.value
+        if (current !is Provider) {
+            onError("Current user is not a provider")
+            return
         }
+
+        // 🎯 1. Crear un nou servei local
+        val newService = ProviderService(
+            id = (current.services.maxOfOrNull { it.id } ?: 0) + 1, // generar ID local
+            name = title,
+            category = category,
+            description = description,
+            price = price,
+            createdAt = LocalDateTime.now(),
+            updatedAt = LocalDateTime.now(),
+            providerId = current.id
+        )
+
+        // 🎯 2. Afegir-lo a la llista
+        val updatedServices = current.services + newService
+
+        // 🎯 3. Actualitzar el provider local
+        val updatedProvider = current.copy(services = updatedServices)
+
+        _currentUser.value = updatedProvider
+        _profileState.value = Resource.Success(updatedProvider)
+
+        // 🎯 4. Retornar el servei creat
+        onSuccess(newService)
     }
 
 
@@ -559,7 +541,7 @@ class AuthViewModel(
             category = newCategory,
             description = newDescription,
             price = newPrice,
-            updatedAt = java.time.LocalDateTime.now()
+            updatedAt = LocalDateTime.now()
         )
 
         // Actualitzar la llista de serveis

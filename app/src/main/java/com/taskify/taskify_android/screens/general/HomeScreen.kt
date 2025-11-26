@@ -1,9 +1,6 @@
 package com.taskify.taskify_android.screens.general
 
 
-import android.content.Context
-import android.content.res.Configuration
-import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.RepeatMode
@@ -29,6 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.taskify.taskify_android.R
 import com.taskify.taskify_android.logic.viewmodels.AuthViewModel
 import com.taskify.taskify_android.ui.theme.Dark
 import com.taskify.taskify_android.ui.theme.TopGradientEnd
@@ -55,8 +53,6 @@ import com.taskify.taskify_android.data.models.entities.ServiceType
 import com.taskify.taskify_android.data.models.entities.User
 import com.taskify.taskify_android.ui.theme.*
 import androidx.compose.ui.res.stringResource
-import com.taskify.taskify_android.R
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,6 +70,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
         context.getString(R.string.tab_settings)
     )
 
+    // 🌈 Animated gradient background (el deixem igual)
     val infiniteTransition = rememberInfiniteTransition(label = "homeBgAnim")
     val progress by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -113,6 +110,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                 )
         )
 
+        // 🔹 Scaffold amb topBar i bottomBar
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
@@ -951,10 +949,9 @@ fun ProviderServiceScreen(authViewModel: AuthViewModel) {
             onCreate = { title, category, desc, price ->
                 authViewModel.createService(
                     title = title,
-                    category = category.name,
+                    category = category,
                     description = desc,
                     price = price,
-                    context = context,
                     onSuccess = {
                         Toast.makeText(context, "Service created!", Toast.LENGTH_SHORT).show()
                         showCreateDialog = false
@@ -1189,20 +1186,24 @@ fun SettingsScreen(navController: NavController) {
                 .weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            // ⚙️ Settings
             item {
                 SettingItem(stringResource(R.string.settings)) {}
             }
 
+            // 👤 Profile Info
             item {
                 SettingItem(stringResource(R.string.profile_info)) {
                     navController.navigate("profileInfoScreen")
                 }
             }
 
+            // 🔐 Security
             item {
                 SettingItem(stringResource(R.string.security)) {}
             }
 
+            // 📊 Dashboard
             item {
                 SettingItem(stringResource(R.string.dashboard)) {}
             }
@@ -1219,52 +1220,6 @@ fun SettingsScreen(navController: NavController) {
             }
         }
     }
-
-    // Dialog za izbor jezika
-    if (showLanguageDialog) {
-        AlertDialog(
-            onDismissRequest = { showLanguageDialog = false },
-            title = { Text("Select Language") },
-            text = {
-                Column {
-                    Text("English", modifier = Modifier.clickable {
-                        updateLocale(context, "en")
-                        showLanguageDialog = false
-                    })
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Català", modifier = Modifier.clickable {
-                        updateLocale(context, "ca") // katalonski
-                        showLanguageDialog = false
-                    })
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Español", modifier = Modifier.clickable {
-                        updateLocale(context, "es") // španski
-                        showLanguageDialog = false
-                    })
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showLanguageDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-}
-
-fun updateLocale(context: Context, languageCode: String) {
-    val locale = Locale(languageCode)
-    Locale.setDefault(locale)
-
-    val config = Configuration(context.resources.configuration)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        config.setLocale(locale)
-    } else {
-        @Suppress("DEPRECATION")
-        config.locale = locale
-    }
-
-    context.resources.updateConfiguration(config, context.resources.displayMetrics)
 }
 
 // 🔹 Komponenta za svaku stavku u listi

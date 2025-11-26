@@ -9,7 +9,8 @@ import java.time.LocalDateTime
 
 data class UserResponse(
     val id: Long,
-    val fullName: String,
+    val firstName: String,
+    val lastName: String,
     val username: String,
     val email: String,
     val password: String,
@@ -36,7 +37,7 @@ data class UserResponse(
         return if (role.uppercase() == "PROVIDER") {
             Provider(
                 id = id,
-                fullName = fullName,
+                fullName = "$firstName $lastName",
                 username = username,
                 email = email,
                 password = password,
@@ -58,7 +59,7 @@ data class UserResponse(
         } else {
             Customer(
                 id = id,
-                fullName = fullName,
+                fullName = "$firstName $lastName",
                 username = username,
                 email = email,
                 password = password,
