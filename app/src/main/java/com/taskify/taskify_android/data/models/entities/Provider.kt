@@ -14,9 +14,6 @@ data class Provider(
     override val createdAt: LocalDateTime = LocalDateTime.now(),
     override val updatedAt: LocalDateTime = LocalDateTime.now(),
     override val address: String? = "",
-    override val city: String? = "",
-    override val country: String? = "",
-    override val zipCode: String? = "",
     val bio: String? = "",
     val experienceYears: Int = 0,
     val averageRating: Double = 0.0,
@@ -34,9 +31,6 @@ data class Provider(
     createdAt = createdAt,
     updatedAt = updatedAt,
     address = address ?: "",
-    city = city ?: "",
-    country = country ?: "",
-    zipCode = zipCode ?: ""
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -53,9 +47,6 @@ data class Provider(
                 createdAt == other.createdAt &&
                 updatedAt == other.updatedAt &&
                 address == other.address &&
-                city == other.city &&
-                country == other.country &&
-                zipCode == other.zipCode &&
                 bio == other.bio &&
                 experienceYears == other.experienceYears &&
                 averageRating == other.averageRating &&
@@ -65,9 +56,22 @@ data class Provider(
 
     override fun hashCode(): Int {
         return listOf(
-            id, fullName, username, email, password, phoneNumber, profilePic,
-            role, createdAt, updatedAt, address, city, country, zipCode,
-            bio, experienceYears, averageRating, isVerified, services
+            id,
+            fullName,
+            username,
+            email,
+            password,
+            phoneNumber,
+            profilePic,
+            role,
+            createdAt,
+            updatedAt,
+            address,
+            bio,
+            experienceYears,
+            averageRating,
+            isVerified,
+            services
         ).fold(0) { acc, item -> 31 * acc + (item?.hashCode() ?: 0) }
     }
 }

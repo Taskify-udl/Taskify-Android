@@ -9,6 +9,12 @@ data class UserDraft(
     var phoneNumber: String = "",
     var role: Role? = null,
 
+    // Camps de Customer (Afegits)
+    var address: String = "",
+
+    // Camps de Provider (Afegits)
+    var bio: String = "",
+
     // Company data
     var companyName: String = "",
     var cif: String = "",
