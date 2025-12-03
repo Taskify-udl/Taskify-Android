@@ -86,8 +86,12 @@ fun LoginScreen(
     var localError by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    val resources = context.resources
+    // FIX 1: Reiniciem l'estat quan la pantalla es carrega
+    LaunchedEffect(Unit) {
+        authViewModel.resetState()
+    }
 
+    // FIX 2: Aquest LaunchedEffect ara capturarà el canvi de false a true
     LaunchedEffect(loginState.isSuccess) {
         if (loginState.isSuccess) {
             navController.navigate("homeScreen") {
@@ -191,8 +195,18 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = username,
                         onValueChange = { username = it },
-                        label = { Text(stringResource(R.string.username_label), color = Color.Black) },
-                        placeholder = { Text(stringResource(R.string.username_placeholder), color = Color.Black.copy(alpha = 0.6f)) },
+                        label = {
+                            Text(
+                                stringResource(R.string.username_label),
+                                color = Color.Black
+                            )
+                        },
+                        placeholder = {
+                            Text(
+                                stringResource(R.string.username_placeholder),
+                                color = Color.Black.copy(alpha = 0.6f)
+                            )
+                        },
                         singleLine = true,
                         textStyle = LocalTextStyle.current.copy(color = Color.Black),
                         modifier = Modifier.fillMaxWidth()
@@ -201,8 +215,18 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
-                        label = { Text(stringResource(R.string.password_label), color = Color.Black) },
-                        placeholder = { Text(stringResource(R.string.password_placeholder), color = Color.Black.copy(alpha = 0.6f)) },
+                        label = {
+                            Text(
+                                stringResource(R.string.password_label),
+                                color = Color.Black
+                            )
+                        },
+                        placeholder = {
+                            Text(
+                                stringResource(R.string.password_placeholder),
+                                color = Color.Black.copy(alpha = 0.6f)
+                            )
+                        },
                         singleLine = true,
                         textStyle = LocalTextStyle.current.copy(color = Color.Black),
                         visualTransformation =
@@ -262,7 +286,11 @@ fun LoginScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(stringResource(R.string.no_account), fontSize = 14.sp, color = TextGray)
+                        Text(
+                            stringResource(R.string.no_account),
+                            fontSize = 14.sp,
+                            color = TextGray
+                        )
                         Spacer(Modifier.width(4.dp))
                         Text(
                             text = stringResource(R.string.register_button),

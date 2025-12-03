@@ -62,8 +62,14 @@ class AuthRepository(private val api: ApiService) {
         context: Context
     ): Resource<RegisterResponse> {
         return try {
+            // Split fullName en firstName i lastName
+            val parts = userDraft.fullName.split(" ", limit = 2)
+            val firstName = parts.getOrElse(0) { "" }
+            val lastName = parts.getOrElse(1) { "" }
+
             val request = RegisterRequest(
-                fullname = userDraft.fullName,
+                firstName = firstName,
+                lastName = lastName,
                 username = userDraft.username,
                 email = userDraft.email,
                 password = userDraft.password,
@@ -76,6 +82,7 @@ class AuthRepository(private val api: ApiService) {
 
             if (response.isSuccessful) {
                 val body = response.body()
+                Log.d("AuthRepository", "Register body: $body")
                 if (body != null) {
                     AuthPreferences.saveToken(context, body.token)
                     Resource.Success(body)
