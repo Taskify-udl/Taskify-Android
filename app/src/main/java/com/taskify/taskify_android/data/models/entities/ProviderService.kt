@@ -1,9 +1,11 @@
 package com.taskify.taskify_android.data.models.entities
 
+import com.google.gson.annotations.SerializedName
 import java.time.LocalDateTime
 
 data class ProviderService(
     val id: Int,
+    @SerializedName("provider")
     val providerId: Long,
     val name: String,
     val description: String?,

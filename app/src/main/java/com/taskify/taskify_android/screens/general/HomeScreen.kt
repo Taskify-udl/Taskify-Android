@@ -56,6 +56,7 @@ import com.taskify.taskify_android.data.models.entities.ServiceType
 import com.taskify.taskify_android.data.models.entities.User
 import com.taskify.taskify_android.ui.theme.*
 import androidx.compose.ui.res.stringResource
+import com.taskify.taskify_android.data.repository.Resource
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -160,10 +161,11 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                 contentAlignment = Alignment.TopCenter
             ) {
                 when (selectedTab) {
-                    0 -> OffersScreenWithPopup(
+                    0 -> OffersScreen(
                         searchQuery = searchQuery,
                         onSearchChange = { searchQuery = it },
-                        navController = navController
+                        navController = navController,
+                        authViewModel = authViewModel
                     )
 
                     1 -> FavoritesScreen(navController)
@@ -208,15 +210,21 @@ fun BottomNavigationBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
     }
 }
 
-// OffersScreen with popup and navigation for category/offerDetail
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OffersScreenWithPopup(
+fun OffersScreen(
     searchQuery: String,
     onSearchChange: (String) -> Unit,
-    navController: NavController
+    navController: NavController,
+    authViewModel: AuthViewModel
 ) {
-    var selectedOffer by remember { mutableStateOf<String?>(null) }
+    val allServicesState by authViewModel.serviceListState.collectAsState()
+    var selectedOffer by remember { mutableStateOf<ProviderService?>(null) }
+
+    // Càrrega inicial dels serveis
+    LaunchedEffect(Unit) {
+        authViewModel.getServices() // CRIDA A LA NOVA FUNCIÓ
+    }
 
     Column(
         modifier = Modifier
@@ -349,183 +357,85 @@ fun OffersScreenWithPopup(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔸 Sponsored Ads (pravougaonici skoro pune širine, vertikalno skrolanje)
-        Text("Sponsored Ads", fontWeight = FontWeight.SemiBold, color = TopGradientEnd)
+        // 🔸 Serveis disponibles (Dades Reals)
+        Text("Available Services", fontWeight = FontWeight.SemiBold, color = TopGradientEnd)
         Spacer(modifier = Modifier.height(8.dp))
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
-            // 🧼 SuperClean
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .padding(vertical = 6.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable { selectedOffer = "SuperClean - Deep Cleaning Services" }
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.worker1),
-                        contentDescription = "SuperClean",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.matchParentSize()
-                    )
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
-                                )
-                            )
-                    )
+        when (allServicesState) {
+            is Resource.Loading -> {
+                Box(Modifier
+                    .fillMaxWidth()
+                    .weight(1f), Alignment.Center) {
+                    CircularProgressIndicator(color = BrandBlue)
+                }
+            }
+
+            is Resource.Error -> {
+                Box(Modifier
+                    .fillMaxWidth()
+                    .weight(1f), Alignment.Center) {
                     Text(
-                        text = "SuperClean - Deep Cleaning Services",
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(16.dp),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
+                        "Error loading offers: ${(allServicesState as Resource.Error).message}",
+                        color = Color.Red,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
 
-            // 🎨 PaintPro
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .padding(vertical = 6.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable { selectedOffer = "PaintPro - Interior & Exterior Painting" }
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.worker2),
-                        contentDescription = "PaintPro",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.matchParentSize()
-                    )
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
-                                )
-                            )
-                    )
-                    Text(
-                        text = "PaintPro - Interior & Exterior Painting",
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(16.dp),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-                }
-            }
+            is Resource.Success -> {
+                val services = (allServicesState as Resource.Success).data
 
-            // 🔧 QuickFix
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .padding(vertical = 6.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable { selectedOffer = "QuickFix - 24/7 Plumbing" }
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.worker3),
-                        contentDescription = "QuickFix",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.matchParentSize()
-                    )
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
-                                )
-                            )
-                    )
-                    Text(
-                        text = "QuickFix - 24/7 Plumbing",
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(16.dp),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
+                val filteredServices = services.filter { service ->
+                    // Filtra pel nom del servei o la descripció (ignorant majúscules/minúscules)
+                    searchQuery.isBlank() ||
+                            service.name.contains(searchQuery, ignoreCase = true) ||
+                            (service.description?.contains(searchQuery, ignoreCase = true) ?: false)
                 }
-            }
 
-            // ⚡ EcoElectric
-            item {
-                Box(
-                    modifier = Modifier
+                if (filteredServices.isEmpty()) { // Utilitzem filteredServices
+                    Box(Modifier
                         .fillMaxWidth()
-                        .height(180.dp)
-                        .padding(vertical = 6.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable { selectedOffer = "EcoElectric - Sustainable Electrical Work" }
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.worker4),
-                        contentDescription = "EcoElectric",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.matchParentSize()
-                    )
-                    Box(
+                        .weight(1f), Alignment.Center) {
+                        Text("No services found.", color = Color.Gray)
+                    }
+                } else {
+                    LazyColumn(
                         modifier = Modifier
-                            .matchParentSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
-                                )
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
+                        items(filteredServices) { service -> // Utilitzem filteredServices
+                            // Component que mostra la targeta d'oferta
+                            ServiceOfferCard(
+                                service = service,
+                                onClick = { selectedOffer = service }
                             )
-                    )
-                    Text(
-                        text = "EcoElectric - Sustainable Electrical Work",
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(16.dp),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
+                        }
+                    }
                 }
             }
         }
     }
 
-    // 🪟 Popup za prikaz detalja
+    // 🪟 Popup per mostrar detalls (adaptat a ProviderService)
     if (selectedOffer != null) {
+        val offer = selectedOffer!!
         AlertDialog(
             onDismissRequest = { selectedOffer = null },
-            title = { Text(selectedOffer ?: "", color = TopGradientEnd) },
+            title = { Text(offer.name, color = TopGradientEnd) },
             text = {
                 Column {
-                    Text("Description: This is a demo description for $selectedOffer")
+                    Text("Description: ${offer.description ?: "No description provided."}")
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Price: €50")
+                    Text("Price: €${offer.price}")
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Reviews: ★★★★☆")
+                    Text("Category: ${offer.category?.name?.replace("_", " ") ?: "N/A"}")
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        navController.navigate("offerDetail/${selectedOffer}")
+                        navController.navigate("offerDetail/${offer.name}")
                         selectedOffer = null
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = TopGradientEnd)
@@ -541,6 +451,54 @@ fun OffersScreenWithPopup(
             shape = RoundedCornerShape(16.dp),
             containerColor = Color.White
         )
+    }
+}
+
+// NOU: Component reutilitzable per mostrar una oferta
+@Composable
+fun ServiceOfferCard(service: ProviderService, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(180.dp)
+            .padding(vertical = 6.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onClick() }
+    ) {
+        // Imatge Placeholder
+        Image(
+            painter = painterResource(id = R.drawable.worker1),
+            contentDescription = service.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.matchParentSize()
+        )
+        // Gradient overlay i text
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                    )
+                )
+        )
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+        ) {
+            Text(
+                text = service.name,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+            Text(
+                text = "€${service.price} / ${service.category?.name?.replace("_", " ") ?: "N/A"}",
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 14.sp
+            )
+        }
     }
 }
 
@@ -892,13 +850,18 @@ fun CreateServiceScreen(
 
 @Composable
 fun ProviderServiceScreen(authViewModel: AuthViewModel) {
-
     val context = LocalContext.current
     val user by authViewModel.currentUser.collectAsState()
+    val serviceListState by authViewModel.serviceListState.collectAsState()
     val provider = user as? Provider ?: return
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var serviceToEdit by remember { mutableStateOf<ProviderService?>(null) }
+
+    // 1. CÀRREGA INICIAL
+    LaunchedEffect(Unit) {
+        authViewModel.loadProviderServices()
+    }
 
     val services = provider.services
 
@@ -927,20 +890,41 @@ fun ProviderServiceScreen(authViewModel: AuthViewModel) {
 
         Spacer(Modifier.height(22.dp))
 
-        if (services.isEmpty()) {
-            Box(
-                Modifier.fillMaxSize(),
-                Alignment.Center
-            ) {
-                Text("You haven't created any services yet.", color = Color.Gray)
+        // 2. GESTIÓ D'ESTATS DE CÀRREGA
+        when (serviceListState) {
+            is Resource.Loading -> {
+                Box(Modifier.fillMaxSize(), Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
-        } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                items(services) { service ->
-                    ServiceCard(
-                        service = service,
-                        onClick = { serviceToEdit = service }
+
+            is Resource.Error -> {
+                Box(Modifier.fillMaxSize(), Alignment.Center) {
+                    Text(
+                        "Error loading services: ${(serviceListState as Resource.Error).message}",
+                        color = Color.Red,
+                        textAlign = TextAlign.Center
                     )
+                }
+            }
+
+            is Resource.Success -> {
+                if (services.isEmpty()) {
+                    Box(
+                        Modifier.fillMaxSize(),
+                        Alignment.Center
+                    ) {
+                        Text("You haven't created any services yet.", color = Color.Gray)
+                    }
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        items(services) { service ->
+                            ServiceCard(
+                                service = service,
+                                onClick = { serviceToEdit = service }
+                            )
+                        }
+                    }
                 }
             }
         }

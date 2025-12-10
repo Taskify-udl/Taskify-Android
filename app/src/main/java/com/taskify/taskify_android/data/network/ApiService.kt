@@ -31,6 +31,9 @@ interface ApiService {
         @Body body: CreateServiceRequest
     ): Response<ProviderService>
 
+    @GET("api/service")
+    suspend fun getServices(): Response<List<ProviderService>>
+
     @GET("api/profile_detail")
     suspend fun getProfile(): Response<UserResponse>
 
