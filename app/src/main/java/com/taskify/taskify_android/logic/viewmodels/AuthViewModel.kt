@@ -43,6 +43,9 @@ class AuthViewModel(
     private val _profileState = MutableStateFlow<Resource<User>>(Resource.Loading())
     val profileState: StateFlow<Resource<User>> = _profileState
 
+    private val _serviceListState = MutableStateFlow<Resource<List<ProviderService>>>(Resource.Loading())
+    val serviceListState: StateFlow<Resource<List<ProviderService>>> = _serviceListState
+
     // ---------- LOGIN ----------
     fun login(username: String, password: String, context: Context) {
         viewModelScope.launch {
@@ -187,7 +190,6 @@ class AuthViewModel(
                     _authState.value = AuthUiState(isLoading = true)
                 }
             }
-
             Log.d("AuthViewModel", "User: ${_authState.value.user}")
             Log.d("AuthViewModel", "Token: ${_authState.value.token}")
         }
@@ -195,10 +197,7 @@ class AuthViewModel(
 
     // ---------- SAVE USER LOCALLY ----------
     fun saveLocalUser(user: User) {
-        val current = _currentUser.value
-        Log.d("AuthViewModel", "1: saveLocalUser: $user")
         _currentUser.value = user
-        Log.d("AuthViewModel", "2: saveLocalUser: $user")
     }
 
     fun loadProfile() {
@@ -242,62 +241,6 @@ class AuthViewModel(
         }
     }
 
-    /*
-    fun createService(
-        title: String,
-        category: String,
-        description: String,
-        price: Int,
-        context: Context,
-        onSuccess: (ProviderService) -> Unit,
-        onError: (String) -> Unit
-    ) {
-        viewModelScope.launch {
-            _createServiceState.value = Resource.Loading()
-            try {
-                val userId = currentUser.value?.id ?: authState.value.user?.id?.toLong() ?: 0L
-                Log.d("AuthViewModel", "User ID: $userId")
-
-                val response = repository.createService(
-                    title = title,
-                    category = category,
-                    description = description,
-                    price = price,
-                    context = context,
-                    providerId = userId
-                )
-                Log.d(
-                    "AuthViewModel",
-                    "CreateService response: ${response.code()} ${response.message()}"
-                )
-
-                if (response.isSuccessful && response.body() != null) {
-                    val service = response.body()!!
-                    val current = _currentUser.value
-                    if (current is Provider) {
-                        val updatedProvider = current.copy(
-                            services = current.services + service
-                        )
-                        _currentUser.value = updatedProvider
-                        _profileState.value = Resource.Success(updatedProvider)
-                    }
-                    _createServiceState.value = Resource.Success(service)
-                    onSuccess(service)
-                } else {
-                    val errorBody = response.errorBody()?.string()
-                    val error = "Error creating service: ${response.code()} - $errorBody"
-                    Log.e("AuthViewModel", error)
-                    _createServiceState.value = Resource.Error(error)
-                    onError(error)
-                }
-            } catch (e: Exception) {
-                val error = "Network error: ${e.localizedMessage}"
-                Log.e("AuthViewModel", error)
-                _createServiceState.value = Resource.Error(error)
-                onError(error)
-            }
-        }
-    }*/
     fun createService(
         title: String,
         category: ServiceType,
@@ -312,31 +255,88 @@ class AuthViewModel(
             return
         }
 
-        // 🎯 1. Crear un nou servei local
-        val newService = ProviderService(
-            id = (current.services.maxOfOrNull { it.id } ?: 0) + 1, // generar ID local
-            name = title,
-            category = category,
-            description = description,
-            price = price,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
-            providerId = current.id
-        )
+        viewModelScope.launch {
+            val providerId = current.id
 
-        // 🎯 2. Afegir-lo a la llista
-        val updatedServices = current.services + newService
+            // Cridem al repositori amb el nom de l'enum com a categoria (String)
+            when (val result = repository.createService(
+                title = title,
+                category = category.name, // Enviem l'string del ServiceType (p. ex., "PLUMBING")
+                description = description,
+                price = price,
+                providerId = providerId
+            )) {
+                is Resource.Success -> {
+                    val service = result.data
 
-        // 🎯 3. Actualitzar el provider local
-        val updatedProvider = current.copy(services = updatedServices)
+                    // 🎯 1. Actualitzar la llista local de serveis
+                    val updatedServices = current.services + service
 
-        _currentUser.value = updatedProvider
-        _profileState.value = Resource.Success(updatedProvider)
+                    // 🎯 2. Actualitzar el provider local
+                    val updatedProvider = current.copy(services = updatedServices)
 
-        // 🎯 4. Retornar el servei creat
-        onSuccess(newService)
+                    _currentUser.value = updatedProvider
+                    _profileState.value = Resource.Success(updatedProvider)
+
+                    // 🎯 3. Retornar el servei creat
+                    onSuccess(service)
+                }
+                is Resource.Error -> {
+                    onError(result.message)
+                }
+                is Resource.Loading -> {
+                    // Es podria afegir gestió de loading si es vol
+                }
+            }
+        }
     }
 
+    fun loadProviderServices() {
+        viewModelScope.launch {
+            val currentProvider = _currentUser.value as? Provider ?: return@launch
+            _serviceListState.value = Resource.Loading()
+
+            when (val result = repository.getServices()) {
+                is Resource.Success -> {
+                    val allServices = result.data
+                    val currentProviderId = currentProvider.id
+                    Log.d("AuthViweModel", "Service list: $allServices")
+
+                    // 1. FILTRAT: Quedar-se només amb els serveis del provider actual
+                    val filteredServices = allServices.filter { service ->
+                        Log.d("AuthViewModel", "Service provider ID: ${service.providerId}")
+                        service.providerId == currentProviderId
+                    }
+
+                    // 2. Actualitzar l'objecte Provider de l'estat _currentUser
+                    val updatedProvider = currentProvider.copy(services = filteredServices)
+                    saveLocalUser(updatedProvider) // Manté el Provider a _currentUser actualitzat
+
+                    _serviceListState.value = Resource.Success(filteredServices)
+                }
+                is Resource.Error -> {
+                    _serviceListState.value = Resource.Error(result.message)
+                }
+                is Resource.Loading -> { /* Handled above */ }
+            }
+        }
+    }
+
+    fun getServices() {
+        viewModelScope.launch {
+            _serviceListState.value = Resource.Loading()
+
+            when (val result = repository.getServices()) {
+                is Resource.Success -> {
+                    _serviceListState.value = Resource.Success(result.data)
+                }
+                is Resource.Error -> {
+                    _serviceListState.value = Resource.Error(result.message)
+                }
+                is Resource.Loading -> { /* Handled above */ }
+            }
+        }
+    }
 
     fun updateService(
         serviceToUpdate: ProviderService,
