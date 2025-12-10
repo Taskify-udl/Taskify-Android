@@ -29,6 +29,7 @@ import com.taskify.taskify_android.R
 import com.taskify.taskify_android.data.models.entities.Customer
 import com.taskify.taskify_android.data.models.entities.Provider
 import com.taskify.taskify_android.data.models.entities.User
+import com.taskify.taskify_android.data.models.entities.UserDraft
 import com.taskify.taskify_android.data.repository.Resource
 import com.taskify.taskify_android.ui.theme.*
 
@@ -44,35 +45,32 @@ fun ProfileInfoScreen(navController: NavController, authViewModel: AuthViewModel
 
     var isEditing by remember { mutableStateOf(false) }
 
-    // Editable states
-    var name: String? by remember { mutableStateOf("") }
-    var email: String? by remember { mutableStateOf("") }
-    var username: String? by remember { mutableStateOf("") }
-    var phone: String? by remember { mutableStateOf("") }
-    var address: String? by remember { mutableStateOf("") }
-    var city: String? by remember { mutableStateOf("") }
-    var country: String? by remember { mutableStateOf("") }
-    var zipCode: String? by remember { mutableStateOf("") }
-    var bio: String? by remember { mutableStateOf("") }
-    var experienceYears by remember { mutableStateOf("") }
+    // NOU: Instància mutable per a l'edició (Única font de veritat per a l'edició)
+    var editableDraft by remember { mutableStateOf(UserDraft()) }
 
-    // Inicialitzar estats amb el user
+    // Inicialitzar estats amb el user (Càrrega robusta)
     LaunchedEffect(user) {
-        user?.let {
-            name = it.fullName
-            email = it.email
-            username = it.username
-            phone = it.phoneNumber
+        user?.let { currentUser ->
+            // Carregar dades comunes a UserDraft
+            editableDraft = editableDraft.copy(
+                fullName = currentUser.fullName ?: "",
+                email = currentUser.email ?: "",
+                username = currentUser.username ?: "",
+                phoneNumber = currentUser.phoneNumber ?: "",
+                role = currentUser.role,
+            )
 
-            if (it is Customer) {
-                address = it.address
-                city = it.city
-                country = it.country
-                zipCode = it.zipCode
+            // Carregar camps de Customer/Provider
+            if (currentUser is Customer) {
+                editableDraft = editableDraft.copy(
+                    address = currentUser.address ?: "",
+                )
             }
-            if (it is Provider) {
-                bio = it.bio
-                experienceYears = it.experienceYears.toString()
+            if (currentUser is Provider) {
+                // Carreguem directament a UserDraft, utilitzant els valors de l'objecte Provider
+                editableDraft = editableDraft.copy(
+                    bio = currentUser.bio ?: ""
+                )
             }
         }
     }
@@ -91,23 +89,28 @@ fun ProfileInfoScreen(navController: NavController, authViewModel: AuthViewModel
                         TextButton(onClick = {
                             if (isEditing) {
                                 // SAVE MODE
-                                val updates = mutableMapOf(
-                                    "fullName" to name,
-                                    "username" to username,
-                                    "email" to email,
-                                    "phoneNumber" to phone
+
+                                // Split fullName en firstName i lastName per a l'API
+                                val fullName = editableDraft.fullName
+                                val parts = fullName.split(" ", limit = 2)
+                                val firstName = parts.getOrElse(0) { "" }
+                                val lastName = parts.getOrElse(1) { "" }
+
+                                val updates = mutableMapOf<String, Any?>(
+                                    "first_name" to firstName, // FIX: Utilitzem snake_case per a l'API
+                                    "last_name" to lastName,   // FIX: Utilitzem snake_case per a l'API
+                                    "username" to editableDraft.username,
+                                    "email" to editableDraft.email,
+                                    "phone" to editableDraft.phoneNumber
                                 )
 
+                                // Afegir camps de Customer/Provider des del draft
                                 if (user is Customer) {
-                                    updates["address"] = address
-                                    updates["city"] = city
-                                    updates["country"] = country
-                                    updates["zipCode"] = zipCode
+                                    updates["location"] = editableDraft.address
+
                                 }
                                 if (user is Provider) {
-                                    updates["bio"] = bio
-                                    updates["experienceYears"] =
-                                        (experienceYears.toIntOrNull() ?: 0).toString()
+                                    updates["bio"] = editableDraft.bio // Obtenim de UserDraft
                                 }
 
                                 authViewModel.updateProfile(
@@ -174,19 +177,13 @@ fun ProfileInfoScreen(navController: NavController, authViewModel: AuthViewModel
                 }
 
                 item {
+                    // Adaptem ProfileFieldsSection per usar només el Draft
                     ProfileFieldsSection(
                         user = user!!,
                         isEditing = isEditing,
-                        name = name, onName = { name = it },
-                        username = username, onUsername = { username = it },
-                        email = email, onEmail = { email = it },
-                        phone = phone, onPhone = { phone = it },
-                        address = address, onAddress = { address = it },
-                        city = city, onCity = { city = it },
-                        country = country, onCountry = { country = it },
-                        zipCode = zipCode, onZipCode = { zipCode = it },
-                        bio = bio, onBio = { bio = it },
-                        experienceYears = experienceYears, onExperienceYears = { experienceYears = it }
+
+                        draft = editableDraft,
+                        onDraftChange = { editableDraft = it }
                     )
                 }
             }
@@ -198,48 +195,60 @@ fun ProfileInfoScreen(navController: NavController, authViewModel: AuthViewModel
 fun ProfileFieldsSection(
     user: User,
     isEditing: Boolean,
-    name: String?, onName: (String?) -> Unit,
-    username: String?, onUsername: (String?) -> Unit,
-    email: String?, onEmail: (String?) -> Unit,
-    phone: String?, onPhone: (String?) -> Unit,
-    address: String?, onAddress: (String?) -> Unit,
-    city: String?, onCity: (String?) -> Unit,
-    country: String?, onCountry: (String?) -> Unit,
-    zipCode: String?, onZipCode: (String?) -> Unit,
-    bio: String?, onBio: (String?) -> Unit,
-    experienceYears: String, onExperienceYears: (String) -> Unit
+    draft: UserDraft,
+    onDraftChange: (UserDraft) -> Unit
 ) {
     // Camps comuns
-    ProfileEditableField("Full Name", name, onName, enabled = isEditing)
+    ProfileEditableField(
+        "Full Name",
+        draft.fullName,
+        { onDraftChange(draft.copy(fullName = it)) },
+        enabled = isEditing
+    )
     Spacer(Modifier.height(12.dp))
-    ProfileEditableField("Username", username, onUsername, enabled = isEditing)
+    ProfileEditableField(
+        "Username",
+        draft.username,
+        { onDraftChange(draft.copy(username = it)) },
+        enabled = isEditing
+    )
     Spacer(Modifier.height(12.dp))
-    ProfileEditableField("Email", email, onEmail, enabled = isEditing)
+    ProfileEditableField(
+        "Email",
+        draft.email,
+        { onDraftChange(draft.copy(email = it)) },
+        enabled = isEditing
+    )
     Spacer(Modifier.height(12.dp))
-    ProfileEditableField("Phone Number", phone, onPhone, enabled = isEditing)
+    ProfileEditableField(
+        "Phone Number",
+        draft.phoneNumber,
+        { onDraftChange(draft.copy(phoneNumber = it)) },
+        enabled = isEditing
+    )
     Spacer(Modifier.height(12.dp))
 
     // Camps Customer/Provider
     if (user is Customer) {
-        ProfileEditableField("Address", address, onAddress, enabled = isEditing)
-        Spacer(Modifier.height(12.dp))
-        ProfileEditableField("City", city, onCity, enabled = isEditing)
-        Spacer(Modifier.height(12.dp))
-        ProfileEditableField("Country", country, onCountry, enabled = isEditing)
-        Spacer(Modifier.height(12.dp))
-        ProfileEditableField("Zip Code", zipCode, onZipCode, enabled = isEditing)
+        ProfileEditableField(
+            "Address",
+            draft.address,
+            { onDraftChange(draft.copy(address = it)) },
+            enabled = isEditing
+        )
         Spacer(Modifier.height(12.dp))
     }
 
     if (user is Provider) {
-        ProfileEditableField("Bio", bio, onBio, enabled = isEditing)
-        Spacer(Modifier.height(12.dp))
+        // Camps de Provider (usant el camp del Draft)
         ProfileEditableField(
-            "Experience Years",
-            experienceYears,
-            onExperienceYears,
+            "Bio",
+            draft.bio,
+            { onDraftChange(draft.copy(bio = it)) },
             enabled = isEditing
         )
+        Spacer(Modifier.height(12.dp))
+
         Spacer(Modifier.height(12.dp))
         ProfileEditableField("Average Rating", user.averageRating.toString(), {}, enabled = false)
         Spacer(Modifier.height(12.dp))

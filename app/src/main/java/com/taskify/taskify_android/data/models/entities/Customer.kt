@@ -14,7 +14,5 @@ open class Customer(
     override val createdAt: LocalDateTime,
     override val updatedAt: LocalDateTime,
     open val address: String?,
-    open val city: String?,
-    open val country: String?,
-    open val zipCode: String?
+
 ) : User

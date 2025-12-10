@@ -62,6 +62,12 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
     val context = LocalContext.current
     var userDraft by remember { mutableStateOf(UserDraft()) }
 
+    // NOU: Observació de l'estat del Viewmodel
+    val authState by authViewModel.authState.collectAsState()
+
+    // NOU: Estat local per al missatge d'error
+    var registerError by remember { mutableStateOf<String?>(null) }
+
     // background animation
     val infiniteTransition = rememberInfiniteTransition(label = "bg")
     val progress by infiniteTransition.animateFloat(
@@ -82,6 +88,23 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
     val endA = Offset(0f, screenHeightPx * progress)
     val startB = Offset(0f, screenHeightPx * (1f - progress))
     val endB = Offset(screenWidthPx * progress, screenHeightPx)
+
+    LaunchedEffect(authState.isSuccess) {
+        if (authState.isSuccess) {
+            navController.navigate("homeScreen") {
+                popUpTo("register") { inclusive = true }
+                launchSingleTop = true
+            }
+            // IMPORTANT: Un cop naveguem, netegem l'estat per evitar navegacions futures
+            authViewModel.resetState()
+        }
+    }
+
+    LaunchedEffect(authState.error) {
+        if (authState.error != null) {
+            registerError = authState.error
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // gradient background layers
@@ -133,7 +156,10 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                         )
 
                         SignupStep.ACCOUNT_TYPE -> StepAccountType(
-                            onBack = { step = SignupStep.PERSONAL_INFO },
+                            onBack = {
+                                step = SignupStep.PERSONAL_INFO
+                                authViewModel.resetState()
+                            },
                             onClientSelected = {
                                 userDraft = userDraft.copy(role = Role.CUSTOMER)
                                 step = SignupStep.CUSTOMER_SUMMARY
@@ -147,17 +173,21 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                         SignupStep.CUSTOMER_SUMMARY -> StepCustomertSummary(
                             name = userDraft.fullName,
                             email = userDraft.email,
-                            onBack = { step = SignupStep.ACCOUNT_TYPE },
+                            onBack = {
+                                step = SignupStep.ACCOUNT_TYPE
+                                authViewModel.resetState()
+                            },
                             onStart = {
+                                // Només cridem a la funció register, la navegació es fa a LaunchedEffect
                                 authViewModel.register(userDraft, context)
-                                navController.navigate("homeScreen") {
-                                    popUpTo("register") { inclusive = true }
-                                }
                             }
                         )
 
                         SignupStep.PROVIDER_TYPE -> StepProviderType(
-                            onBack = { step = SignupStep.ACCOUNT_TYPE },
+                            onBack = {
+                                step = SignupStep.ACCOUNT_TYPE
+                                authViewModel.resetState()
+                            },
                             onFreelancerSelected = {
                                 userDraft = userDraft.copy(role = Role.FREELANCER)
                                 step = SignupStep.FREELANCER_SUMMARY
@@ -171,12 +201,12 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                         SignupStep.FREELANCER_SUMMARY -> StepFreelancerSummary(
                             name = userDraft.fullName,
                             email = userDraft.email,
-                            onBack = { step = SignupStep.PROVIDER_TYPE },
+                            onBack = {
+                                step = SignupStep.PROVIDER_TYPE
+                                authViewModel.resetState()
+                            },
                             onStart = {
                                 authViewModel.register(userDraft, context)
-                                navController.navigate("homeScreen") {
-                                    popUpTo("register") { inclusive = true }
-                                }
                             }
                         )
 
@@ -186,7 +216,9 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                             companyEmail = userDraft.companyEmail,
                             onCompanyNameChange = { userDraft = userDraft.copy(companyName = it) },
                             onCifChange = { userDraft = userDraft.copy(cif = it) },
-                            onCompanyEmailChange = { userDraft = userDraft.copy(companyEmail = it) },
+                            onCompanyEmailChange = {
+                                userDraft = userDraft.copy(companyEmail = it)
+                            },
                             onContinue = {
                                 val error = validateCompanyInfo(
                                     userDraft.companyName,
@@ -201,7 +233,10 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                         SignupStep.COMPANY_CODE -> StepCompanyCode(
                             companyEmail = userDraft.companyEmail,
                             context = context,
-                            onBack = { step = SignupStep.COMPANY_INFO },
+                            onBack = {
+                                step = SignupStep.COMPANY_INFO
+                                authViewModel.resetState()
+                            },
                             onVerify = {
                                 userDraft = userDraft.copy(role = Role.COMPANY_ADMIN)
                                 step = SignupStep.COMPANY_SUMMARY
@@ -212,15 +247,36 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                             companyName = userDraft.companyName,
                             cif = userDraft.cif,
                             companyEmail = userDraft.companyEmail,
-                            onBack = { step = SignupStep.COMPANY_CODE },
+                            onBack = {
+                                step = SignupStep.COMPANY_CODE
+                                authViewModel.resetState()
+                            },
                             onStart = {
                                 authViewModel.register(userDraft, context)
-                                navController.navigate("homeScreen") {
-                                    popUpTo("register") { inclusive = true }
-                                }
                             }
                         )
                     }
+                }
+
+                // NOU: Indicador de càrrega
+                if (authState.isLoading) {
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .background(Color.Black.copy(alpha = 0.5f)),
+                        Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = BrandBlue)
+                    }
+                }
+
+                // NOU: Gestió d'errors
+                DisposableEffect(registerError) {
+                    if (registerError != null) {
+                        Toast.makeText(context, registerError, Toast.LENGTH_LONG).show()
+                        registerError = null
+                    }
+                    onDispose {}
                 }
 
                 // Already have an account? Login
@@ -309,7 +365,12 @@ fun StepPersonalInfo(
             .padding(horizontal = 28.dp, vertical = 36.dp)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(id = R.string.create_account), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextDark)
+            Text(
+                stringResource(id = R.string.create_account),
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextDark
+            )
             Text(stringResource(id = R.string.step_1_personal_info), color = TextGray)
             Spacer(Modifier.height(12.dp))
 
@@ -330,7 +391,12 @@ fun StepPersonalInfo(
                 value = userDraft.fullName,
                 onValueChange = { onUpdate(userDraft.copy(fullName = it)) },
                 label = { Text(stringResource(id = R.string.full_name), color = Color.Black) },
-                placeholder = { Text(stringResource(id = R.string.full_name_placeholder), color = Color.Black.copy(alpha = 0.6f)) },
+                placeholder = {
+                    Text(
+                        stringResource(id = R.string.full_name_placeholder),
+                        color = Color.Black.copy(alpha = 0.6f)
+                    )
+                },
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 modifier = Modifier.fillMaxWidth()
@@ -340,7 +406,12 @@ fun StepPersonalInfo(
                 value = userDraft.username,
                 onValueChange = { onUpdate(userDraft.copy(username = it)) },
                 label = { Text(stringResource(id = R.string.username_label), color = Color.Black) },
-                placeholder = { Text(stringResource(id = R.string.username_placeholder), color = Color.Black.copy(alpha = 0.6f)) },
+                placeholder = {
+                    Text(
+                        stringResource(id = R.string.username_placeholder),
+                        color = Color.Black.copy(alpha = 0.6f)
+                    )
+                },
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 modifier = Modifier.fillMaxWidth()
@@ -350,7 +421,12 @@ fun StepPersonalInfo(
                 value = userDraft.email,
                 onValueChange = { onUpdate(userDraft.copy(email = it)) },
                 label = { Text(stringResource(id = R.string.email_label), color = Color.Black) },
-                placeholder = { Text(stringResource(id = R.string.email_placeholder), color = Color.Black.copy(alpha = 0.6f)) },
+                placeholder = {
+                    Text(
+                        stringResource(id = R.string.email_placeholder),
+                        color = Color.Black.copy(alpha = 0.6f)
+                    )
+                },
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 modifier = Modifier.fillMaxWidth()
@@ -360,12 +436,18 @@ fun StepPersonalInfo(
                 value = userDraft.password,
                 onValueChange = { onUpdate(userDraft.copy(password = it)) },
                 label = { Text(stringResource(id = R.string.password_label), color = Color.Black) },
-                placeholder = { Text(stringResource(id = R.string.password_placeholder), color = Color.Black.copy(alpha = 0.6f)) },
+                placeholder = {
+                    Text(
+                        stringResource(id = R.string.password_placeholder),
+                        color = Color.Black.copy(alpha = 0.6f)
+                    )
+                },
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 visualTransformation = if (passVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
-                    val icon = if (passVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    val icon =
+                        if (passVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { passVisible = !passVisible }) {
                         Icon(icon, contentDescription = null, tint = Color.Black)
                     }
@@ -376,13 +458,24 @@ fun StepPersonalInfo(
             OutlinedTextField(
                 value = userDraft.confirmPassword,
                 onValueChange = { onUpdate(userDraft.copy(confirmPassword = it)) },
-                label = { Text(stringResource(id = R.string.confirm_password_label), color = Color.Black) },
-                placeholder = { Text(stringResource(id = R.string.confirm_password_placeholder), color = Color.Black.copy(alpha = 0.6f)) },
+                label = {
+                    Text(
+                        stringResource(id = R.string.confirm_password_label),
+                        color = Color.Black
+                    )
+                },
+                placeholder = {
+                    Text(
+                        stringResource(id = R.string.confirm_password_placeholder),
+                        color = Color.Black.copy(alpha = 0.6f)
+                    )
+                },
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 visualTransformation = if (confirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
-                    val icon = if (confirmVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    val icon =
+                        if (confirmVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     IconButton(onClick = { confirmVisible = !confirmVisible }) {
                         Icon(icon, contentDescription = null, tint = Color.Black)
                     }
@@ -428,7 +521,12 @@ fun StepAccountType(
             .padding(28.dp)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(id = R.string.create_account), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextDark)
+            Text(
+                stringResource(id = R.string.create_account),
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextDark
+            )
             Text(stringResource(id = R.string.step_2_account_type), color = TextGray)
             Spacer(Modifier.height(12.dp))
             LinearProgressIndicator(
@@ -461,7 +559,11 @@ fun StepAccountType(
                     .padding(16.dp)
             ) {
                 Column {
-                    Text(stringResource(id = R.string.client_title), fontWeight = FontWeight.Bold, color = TextDark)
+                    Text(
+                        stringResource(id = R.string.client_title),
+                        fontWeight = FontWeight.Bold,
+                        color = TextDark
+                    )
                     Spacer(Modifier.height(4.dp))
                     Text(
                         stringResource(id = R.string.client_description),
@@ -470,9 +572,21 @@ fun StepAccountType(
                     )
                     Spacer(Modifier.height(4.dp))
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(stringResource(id = R.string.client_bullet_1), color = TextGray, fontSize = 14.sp)
-                        Text(stringResource(id = R.string.client_bullet_2), color = TextGray, fontSize = 14.sp)
-                        Text(stringResource(id = R.string.client_bullet_3), color = TextGray, fontSize = 14.sp)
+                        Text(
+                            stringResource(id = R.string.client_bullet_1),
+                            color = TextGray,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            stringResource(id = R.string.client_bullet_2),
+                            color = TextGray,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            stringResource(id = R.string.client_bullet_3),
+                            color = TextGray,
+                            fontSize = 14.sp
+                        )
                     }
                 }
             }
@@ -490,7 +604,11 @@ fun StepAccountType(
                     .padding(16.dp)
             ) {
                 Column {
-                    Text(stringResource(id = R.string.provider_title), fontWeight = FontWeight.Bold, color = TextDark)
+                    Text(
+                        stringResource(id = R.string.provider_title),
+                        fontWeight = FontWeight.Bold,
+                        color = TextDark
+                    )
                     Spacer(Modifier.height(4.dp))
                     Text(
                         stringResource(id = R.string.provider_description),
@@ -499,9 +617,21 @@ fun StepAccountType(
                     )
                     Spacer(Modifier.height(4.dp))
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(stringResource(id = R.string.provider_bullet_1), color = TextGray, fontSize = 14.sp)
-                        Text(stringResource(id = R.string.provider_bullet_2), color = TextGray, fontSize = 14.sp)
-                        Text(stringResource(id = R.string.provider_bullet_3), color = TextGray, fontSize = 14.sp)
+                        Text(
+                            stringResource(id = R.string.provider_bullet_1),
+                            color = TextGray,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            stringResource(id = R.string.provider_bullet_2),
+                            color = TextGray,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            stringResource(id = R.string.provider_bullet_3),
+                            color = TextGray,
+                            fontSize = 14.sp
+                        )
                     }
                 }
             }
@@ -528,7 +658,12 @@ fun StepCustomertSummary(
             .padding(28.dp)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(id = R.string.create_account), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextDark)
+            Text(
+                stringResource(id = R.string.create_account),
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextDark
+            )
             Text(stringResource(id = R.string.step_2_account_type), color = TextGray)
             Spacer(Modifier.height(12.dp))
             LinearProgressIndicator(
@@ -610,7 +745,11 @@ fun StepProviderType(
                     .clickable { onFreelancerSelected() }
                     .padding(16.dp)
             ) {
-                Text(stringResource(id = R.string.freelancer_title), fontWeight = FontWeight.Bold, color = TextDark)
+                Text(
+                    stringResource(id = R.string.freelancer_title),
+                    fontWeight = FontWeight.Bold,
+                    color = TextDark
+                )
             }
 
             Spacer(Modifier.height(12.dp))
@@ -625,7 +764,11 @@ fun StepProviderType(
                     .clickable { onEmpresaSelected() }
                     .padding(16.dp)
             ) {
-                Text(stringResource(id = R.string.company_title), fontWeight = FontWeight.Bold, color = TextDark)
+                Text(
+                    stringResource(id = R.string.company_title),
+                    fontWeight = FontWeight.Bold,
+                    color = TextDark
+                )
             }
 
             Spacer(Modifier.height(24.dp))
@@ -655,7 +798,12 @@ fun StepFreelancerSummary(
             .padding(28.dp)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(id = R.string.create_account), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextDark)
+            Text(
+                stringResource(id = R.string.create_account),
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextDark
+            )
             Text(stringResource(id = R.string.step_4_summary), color = TextGray)
             Spacer(Modifier.height(12.dp))
             LinearProgressIndicator(
@@ -697,6 +845,7 @@ fun StepFreelancerSummary(
         }
     }
 }
+
 // -- StepCompanyInfo
 @Composable
 fun StepCompanyInfo(
@@ -742,7 +891,12 @@ fun StepCompanyInfo(
                 value = companyName,
                 onValueChange = onCompanyNameChange,
                 label = { Text(stringResource(id = R.string.company_name), color = Color.Black) },
-                placeholder = { Text(stringResource(id = R.string.company_name_placeholder), color = Color.Black.copy(alpha = 0.6f)) },
+                placeholder = {
+                    Text(
+                        stringResource(id = R.string.company_name_placeholder),
+                        color = Color.Black.copy(alpha = 0.6f)
+                    )
+                },
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 modifier = Modifier.fillMaxWidth()
@@ -752,7 +906,12 @@ fun StepCompanyInfo(
                 value = cif,
                 onValueChange = onCifChange,
                 label = { Text(stringResource(id = R.string.cif), color = Color.Black) },
-                placeholder = { Text(stringResource(id = R.string.cif_placeholder), color = Color.Black.copy(alpha = 0.6f)) },
+                placeholder = {
+                    Text(
+                        stringResource(id = R.string.cif_placeholder),
+                        color = Color.Black.copy(alpha = 0.6f)
+                    )
+                },
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 modifier = Modifier.fillMaxWidth()
@@ -762,7 +921,12 @@ fun StepCompanyInfo(
                 value = companyEmail,
                 onValueChange = onCompanyEmailChange,
                 label = { Text(stringResource(id = R.string.company_email), color = Color.Black) },
-                placeholder = { Text(stringResource(id = R.string.company_email_placeholder), color = Color.Black.copy(alpha = 0.6f)) },
+                placeholder = {
+                    Text(
+                        stringResource(id = R.string.company_email_placeholder),
+                        color = Color.Black.copy(alpha = 0.6f)
+                    )
+                },
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 modifier = Modifier.fillMaxWidth()
@@ -821,7 +985,11 @@ fun StepCompanyCode(
             )
 
             Spacer(Modifier.height(24.dp))
-            Text(stringResource(id = R.string.verification_sent_to), color = TextGray, fontSize = 14.sp)
+            Text(
+                stringResource(id = R.string.verification_sent_to),
+                color = TextGray,
+                fontSize = 14.sp
+            )
             Text(companyEmail, color = TextDark, fontWeight = FontWeight.Medium, fontSize = 15.sp)
 
             Spacer(Modifier.height(28.dp))

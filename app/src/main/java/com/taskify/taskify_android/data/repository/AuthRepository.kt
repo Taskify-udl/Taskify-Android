@@ -62,8 +62,14 @@ class AuthRepository(private val api: ApiService) {
         context: Context
     ): Resource<RegisterResponse> {
         return try {
+            // Split fullName en firstName i lastName
+            val parts = userDraft.fullName.split(" ", limit = 2)
+            val firstName = parts.getOrElse(0) { "" }
+            val lastName = parts.getOrElse(1) { "" }
+
             val request = RegisterRequest(
-                fullname = userDraft.fullName,
+                firstName = firstName,
+                lastName = lastName,
                 username = userDraft.username,
                 email = userDraft.email,
                 password = userDraft.password,
@@ -76,6 +82,7 @@ class AuthRepository(private val api: ApiService) {
 
             if (response.isSuccessful) {
                 val body = response.body()
+                Log.d("AuthRepository", "Register body: $body")
                 if (body != null) {
                     AuthPreferences.saveToken(context, body.token)
                     Resource.Success(body)
@@ -134,14 +141,15 @@ class AuthRepository(private val api: ApiService) {
     }
 
     // ---------- CREATE SERVICE ----------
+    // Refactoritzat per retornar Resource<ProviderService>
     suspend fun createService(
         title: String,
         category: String,
         description: String,
         price: Int,
-        context: Context,
-        providerId: Long
-    ): Response<ProviderService> {
+        providerId: Long // Hem eliminat 'context' que no s'utilitzava aquí
+    ): Resource<ProviderService> {
+        // Assegurem que el format de data sigui ISO 8601 amb 'Z' al final
         val now = LocalDateTime.now().toString() + "Z"
 
         val body = CreateServiceRequest(
@@ -153,9 +161,34 @@ class AuthRepository(private val api: ApiService) {
             createdAt = now,
             updatedAt = now
         )
-        Log.d("AuthRepository", "createService body: $body")
+        Log.d("AuthRepository", "createService request body: $body")
 
-        return api.createService(body)
+        return try {
+            val response = api.createService(body)
+
+            if (response.isSuccessful && response.body() != null) {
+                Resource.Success(response.body()!!)
+            } else {
+                val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                Resource.Error("Error creating service: ${response.code()} - $errorBody")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
     }
 
+    // ---------- GET PROVIDER SERVICES ----------
+    suspend fun getServices(): Resource<List<ProviderService>> {
+        return try {
+            val response = api.getServices()
+
+            if (response.isSuccessful && response.body() != null) {
+                Resource.Success(response.body()!!)
+            } else {
+                Resource.Error("Failed to load services: ${response.code()}")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
 }
