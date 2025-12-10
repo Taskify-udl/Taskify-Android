@@ -41,6 +41,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -169,7 +170,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                     1 -> FavoritesScreen(navController)
                     2 -> CreateServiceScreen(user, authViewModel, navController)
                     3 -> OrdersScreen()
-                    4 -> SettingsScreen(navController = navController)
+                    4 -> SettingsScreen(navController = navController, authViewModel = authViewModel)
                 }
             }
         }
@@ -1153,9 +1154,13 @@ fun ServiceDialog(
 
 // Settings
 @Composable
-fun SettingsScreen(navController: NavController) {
+fun SettingsScreen(navController: NavController, authViewModel: AuthViewModel) {
     val context = LocalContext.current
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) } // Stanje za LogOut dijalog
+
+    // 🌙 STANJE TEME: Čita se iz ThemeState singletona
+    val isDark by remember { ThemeState.isDarkTheme }
 
     Column(
         modifier = Modifier
@@ -1165,11 +1170,13 @@ fun SettingsScreen(navController: NavController) {
     ) {
         // 👤 Profilna slika centrirana
         Image(
+            // Pretpostavljena slika, zamenite R.drawable.profilepic po potrebi
             painter = painterResource(id = R.drawable.profilepic),
             contentDescription = stringResource(R.string.user_logo),
             modifier = Modifier
                 .size(100.dp)
                 .clip(CircleShape)
+                // Koristite boje iz vašeg theme paketa
                 .background(Color(0xFFE7F1FB))
                 .border(2.dp, Color(0xFFD1E8FF), CircleShape)
         )
@@ -1183,18 +1190,13 @@ fun SettingsScreen(navController: NavController) {
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔹 Opcije
+        // 🔹 Opcije u listi
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // ⚙️ Settings
-            item {
-                SettingItem(stringResource(R.string.settings)) {}
-            }
-
             // 👤 Profile Info
             item {
                 SettingItem(stringResource(R.string.profile_info)) {
@@ -1204,47 +1206,117 @@ fun SettingsScreen(navController: NavController) {
 
             // 🔐 Security
             item {
-                SettingItem(stringResource(R.string.security)) {}
+                SettingItem(stringResource(R.string.security)) {
+                    navController.navigate("securityScreen") // ⬅️ NAVIGACIJA NA NOVI EKRAN
+                }
             }
 
             // 📊 Dashboard
-            item {
-                SettingItem(stringResource(R.string.dashboard)) {}
-            }
+            item { SettingItem(stringResource(R.string.dashboard)) {} }
 
             // 🌐 Promjena jezika
             item {
-                SettingItem("Change Language") {
+                SettingItem(stringResource(R.string.language_Change)) {
                     showLanguageDialog = true
                 }
             }
 
+            // 🌙 DARK MODE OPCIJA SA PREKIDAČEM
             item {
-                SettingItem(stringResource(R.string.logout), highlight = true) {}
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFFF1F6FA))
+                        .border(
+                            1.dp,
+                            Color(0xFFD1E8FF),
+                            RoundedCornerShape(16.dp)
+                        )
+                        .padding(start = 20.dp, end = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Dark Mode",
+                        color = Dark,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp
+                    )
+                    Switch(
+                        checked = isDark, // ✅ ISPRAVNO: Varijabla bez zagrada
+                        onCheckedChange = { isChecked ->
+                            // ⬅️ MENJA STANJE TEME U ThemeState
+                            ThemeState.isDarkTheme.value = isChecked
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedTrackColor = TopGradientEnd,
+                            uncheckedTrackColor = LightGray
+                        )
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+
+            // ❌ LOGOUT STAVKA: Postavlja stanje za prikaz dijaloga
+            item {
+                SettingItem(stringResource(R.string.logout), highlight = true) {
+                    showLogoutDialog = true // Prikazuje LogOut dijalog
+                }
             }
         }
     }
+
+    // ===============================================
+    // ➡️ DIJALOG ZA POTVRDU ODJAVE
+    // ===============================================
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text(stringResource(R.string.dialog_logout_title)) },
+            text = { Text(stringResource(R.string.dialog_logout_message)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutDialog = false // Zatvara dijalog
+
+                        // 1. Pozovi logiku odjave
+                        authViewModel.logout(context)
+
+                        // 2. Navigacija na ispravnu rutu i čišćenje steka
+                        navController.navigate("authScreen") {
+                            popUpTo("homeScreen") { inclusive = true } // Briše Home iz steka
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Text(stringResource(R.string.dialog_logout_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text(stringResource(R.string.dialog_logout_cancel))
+                }
+            }
+        )
+    }
+
+    // ===============================================
     // Dialog za izbor jezika
+    // ===============================================
     if (showLanguageDialog) {
         AlertDialog(
             onDismissRequest = { showLanguageDialog = false },
             title = { Text("Select Language") },
             text = {
                 Column {
-                    Text("English", modifier = Modifier.clickable {
-                        updateLocale(context, "en")
-                        showLanguageDialog = false
-                    })
+                    // Pretpostavljene funkcije za promenu lokalizacije
+                    Text("English", modifier = Modifier.clickable { updateLocale(context, "en"); showLanguageDialog = false })
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Català", modifier = Modifier.clickable {
-                        updateLocale(context, "ca") // katalonski
-                        showLanguageDialog = false
-                    })
+                    Text("Català", modifier = Modifier.clickable { updateLocale(context, "ca"); showLanguageDialog = false })
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Español", modifier = Modifier.clickable {
-                        updateLocale(context, "es") // španski
-                        showLanguageDialog = false
-                    })
+                    Text("Español", modifier = Modifier.clickable { updateLocale(context, "es"); showLanguageDialog = false })
                 }
             },
             confirmButton = {
@@ -1296,4 +1368,210 @@ fun SettingItem(title: String, highlight: Boolean = false, onClick: () -> Unit =
             fontSize = 16.sp
         )
     }
+}
+
+// ... (Koristite SettingItem komponentu koju već imate)
+
+// ===============================================
+// 🔒 SECURITY SCREEN
+// ===============================================
+
+@Composable
+fun SecurityScreen(navController: NavController, authViewModel: AuthViewModel) {
+    val context = LocalContext.current
+    val scrollState = rememberScrollState()
+
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var showDeleteAccountDialog by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .padding(16.dp)
+            .verticalScroll(scrollState),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = stringResource(R.string.security_title),
+            fontWeight = FontWeight.Bold,
+            color = TopGradientEnd,
+            fontSize = 24.sp,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
+        // ---------------- Opcije ----------------
+        SettingItem(
+            title = stringResource(R.string.security_change_password),
+            onClick = { showChangePasswordDialog = true }
+        )
+        Spacer(Modifier.height(8.dp))
+
+        // Možete dodati "Aktivne sesije" kao placeholder
+        SettingItem(
+            title = stringResource(R.string.security_active_sessions),
+            onClick = { Toast.makeText(context, context.getString(R.string.security_active_sessions_placeholder), Toast.LENGTH_SHORT).show() }
+        )
+        Spacer(Modifier.height(16.dp))
+
+        Divider()
+        Spacer(Modifier.height(16.dp))
+
+        // ⚠️ Opcija za brisanje naloga je označena crvenom bojom
+        SettingItem(
+            title = stringResource(R.string.security_delete_account),
+            highlight = true,
+            onClick = { showDeleteAccountDialog = true }
+        )
+    }
+
+    // ===============================================
+    // DIJALOG ZA PROMENU LOZINKE
+    // ===============================================
+    if (showChangePasswordDialog) {
+        ChangePasswordDialog(
+            authViewModel = authViewModel,
+            onDismiss = { showChangePasswordDialog = false }
+        )
+    }
+
+    // ===============================================
+    // DIJALOG ZA BRISANJE NALOGA
+    // ===============================================
+    if (showDeleteAccountDialog) {
+        DeleteAccountDialog(
+            authViewModel = authViewModel,
+            navController = navController,
+            onDismiss = { showDeleteAccountDialog = false }
+        )
+    }
+}
+
+// ===============================================
+// 🔑 DIJALOG: PROMENA LOZINKE
+// ===============================================
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChangePasswordDialog(authViewModel: AuthViewModel, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    var oldPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.security_change_password)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = oldPassword,
+                    onValueChange = { oldPassword = it },
+                    label = { Text(stringResource(R.string.security_old_password)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                )
+                OutlinedTextField(
+                    value = newPassword,
+                    onValueChange = { newPassword = it },
+                    label = { Text(stringResource(R.string.security_new_password)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                )
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = { Text(stringResource(R.string.security_confirm_password)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (newPassword != confirmPassword) {
+                        Toast.makeText(context, context.getString(R.string.security_password_match_error), Toast.LENGTH_LONG).show()
+                        return@Button
+                    }
+                    if (oldPassword.isBlank() || newPassword.isBlank()) {
+                        Toast.makeText(context, context.getString(R.string.security_password_empty_error), Toast.LENGTH_LONG).show()
+                        return@Button
+                    }
+
+                    /*authViewModel.changePassword(
+                        oldPassword = oldPassword,
+                        newPassword = newPassword,
+                        onSuccess = {
+                            Toast.makeText(context, context.getString(R.string.security_password_success), Toast.LENGTH_LONG).show()
+                            onDismiss()
+                        },
+                        onError = { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                        }
+                    )*/
+                }
+            ) {
+                Text(stringResource(R.string.security_save_changes))
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss) { Text(stringResource(R.string.dialog_logout_cancel)) }
+        }
+    )
+}
+
+// ===============================================
+// 🗑️ DIJALOG: BRISANJE NALOGA
+// ===============================================
+
+@Composable
+fun DeleteAccountDialog(
+    authViewModel: AuthViewModel,
+    navController: NavController,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.security_delete_account_title)) },
+        text = {
+            Column {
+                Text(stringResource(R.string.security_delete_account_message))
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    stringResource(R.string.security_delete_account_warning),
+                    color = Color.Red,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    /*authViewModel.deleteAccount(
+                        context = context,
+                        onSuccess = {
+                            Toast.makeText(context, context.getString(R.string.security_delete_account_success), Toast.LENGTH_LONG).show()
+                            onDismiss()
+                            // Navigacija na auth ekran nakon brisanja
+                            navController.navigate("authScreen") {
+                                popUpTo("homeScreen") { inclusive = true }
+                            }
+                        },
+                        onError = { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                        }
+                    )*/
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+            ) {
+                Text(stringResource(R.string.security_delete_account_confirm))
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss) { Text(stringResource(R.string.dialog_logout_cancel)) }
+        }
+    )
 }
