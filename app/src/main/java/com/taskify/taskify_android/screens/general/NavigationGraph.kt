@@ -11,7 +11,7 @@ import com.taskify.taskify_android.logic.viewmodels.provideAuthViewModel
 fun NavigationGraph(navController: NavHostController) {
     val authViewModel = provideAuthViewModel()
 
-    NavHost(navController = navController, startDestination = "homeScreen") {
+    NavHost(navController = navController, startDestination = "initScreen") {
         //  Init screen with animated app name
         composable("initScreen") {
             InitScreen(navController = navController)

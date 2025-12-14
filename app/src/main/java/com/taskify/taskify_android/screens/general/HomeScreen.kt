@@ -1,6 +1,5 @@
 package com.taskify.taskify_android.screens.general
 
-
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
@@ -20,6 +19,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerDialog
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -59,6 +64,9 @@ import com.taskify.taskify_android.ui.theme.*
 import androidx.compose.ui.res.stringResource
 import com.taskify.taskify_android.data.repository.Resource
 import java.util.Locale
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -179,7 +187,6 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
     }
 }
 
-
 // Bottom navigation bar
 @Composable
 fun BottomNavigationBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
@@ -211,6 +218,72 @@ fun BottomNavigationBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
     }
 }
 
+@Composable
+fun ServiceOfferCard(
+    service: ProviderService,
+    onContractClick: () -> Unit,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(180.dp)
+            .padding(vertical = 6.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onClick() }
+    ) {
+        // Imatge Placeholder
+        Image(
+            painter = painterResource(id = R.drawable.worker1),
+            contentDescription = service.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.matchParentSize()
+        )
+        // Gradient overlay i text
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                    )
+                )
+        )
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+        ) {
+            Text(
+                text = service.name,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+            Text(
+                text = "€${service.price} / ${service.category?.name?.replace("_", " ") ?: "N/A"}",
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 14.sp
+            )
+        }
+
+        // 🔘 Book Button overlay
+        Button(
+            onClick = onContractClick,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+                .height(40.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = TopGradientEnd,
+                contentColor = Color.White
+            )
+        ) {
+            Text("Book Now", fontWeight = FontWeight.Medium)
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OffersScreen(
@@ -221,10 +294,25 @@ fun OffersScreen(
 ) {
     val allServicesState by authViewModel.serviceListState.collectAsState()
     var selectedOffer by remember { mutableStateOf<ProviderService?>(null) }
+    var showContractDialog by remember { mutableStateOf(false) }
+    var serviceToContract by remember { mutableStateOf<ProviderService?>(null) }
+    val context = LocalContext.current // Dodajemo kontekst ovdje
 
     // Càrrega inicial dels serveis
     LaunchedEffect(Unit) {
-        authViewModel.getServices() // CRIDA A LA NOVA FUNCIÓ
+        authViewModel.getServices()
+    }
+
+    // Ovo je važno: Logika za obradu potvrde rezervacije
+    val onContractConfirmed: (LocalDate, LocalTime, String) -> Unit = { date, time, description ->
+        Toast.makeText(
+            context,
+            "Booking confirmed for ${serviceToContract?.name ?: "service"} on ${date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))} at ${time.format(DateTimeFormatter.ofPattern("HH:mm"))}",
+            Toast.LENGTH_LONG
+        ).show()
+        // Resetujemo stanja nakon što se Toast prikaže
+        showContractDialog = false
+        serviceToContract = null
     }
 
     Column(
@@ -246,7 +334,7 @@ fun OffersScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔹 Service Categories (ikonice koje se pomjeraju s desna na lijevo)
+        // 🔹 Service Categories
         Text(
             text = "Service Categories",
             fontWeight = FontWeight.SemiBold,
@@ -358,7 +446,7 @@ fun OffersScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔸 Serveis disponibles (Dades Reals)
+        // 🔸 Serveis disponibles
         Text("Available Services", fontWeight = FontWeight.SemiBold, color = TopGradientEnd)
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -387,13 +475,12 @@ fun OffersScreen(
                 val services = (allServicesState as Resource.Success).data
 
                 val filteredServices = services.filter { service ->
-                    // Filtra pel nom del servei o la descripció (ignorant majúscules/minúscules)
                     searchQuery.isBlank() ||
                             service.name.contains(searchQuery, ignoreCase = true) ||
                             (service.description?.contains(searchQuery, ignoreCase = true) ?: false)
                 }
 
-                if (filteredServices.isEmpty()) { // Utilitzem filteredServices
+                if (filteredServices.isEmpty()) {
                     Box(Modifier
                         .fillMaxWidth()
                         .weight(1f), Alignment.Center) {
@@ -405,10 +492,13 @@ fun OffersScreen(
                             .fillMaxWidth()
                             .weight(1f)
                     ) {
-                        items(filteredServices) { service -> // Utilitzem filteredServices
-                            // Component que mostra la targeta d'oferta
+                        items(filteredServices) { service ->
                             ServiceOfferCard(
                                 service = service,
+                                onContractClick = {
+                                    serviceToContract = service
+                                    showContractDialog = true
+                                },
                                 onClick = { selectedOffer = service }
                             )
                         }
@@ -418,7 +508,7 @@ fun OffersScreen(
         }
     }
 
-    // 🪟 Popup per mostrar detalls (adaptat a ProviderService)
+    // 🪟 Popup per mostrar detalls
     if (selectedOffer != null) {
         val offer = selectedOffer!!
         AlertDialog(
@@ -453,56 +543,224 @@ fun OffersScreen(
             containerColor = Color.White
         )
     }
-}
 
-// NOU: Component reutilitzable per mostrar una oferta
+    // 🆕 Contract Dialog for booking
+    if (showContractDialog && serviceToContract != null) {
+        ContractDialog(
+            service = serviceToContract!!,
+            onDismiss = {
+                showContractDialog = false
+                serviceToContract = null
+            },
+            onConfirm = onContractConfirmed // Koristimo predefinisanu funkciju
+        )
+    }
+}
 @Composable
-fun ServiceOfferCard(service: ProviderService, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(180.dp)
-            .padding(vertical = 6.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick() }
-    ) {
-        // Imatge Placeholder
-        Image(
-            painter = painterResource(id = R.drawable.worker1),
-            contentDescription = service.name,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.matchParentSize()
+fun ContractDialogLogic(
+    showContractDialog: Boolean,
+    serviceToContract: ProviderService?,
+    onDismiss: () -> Unit,
+    onConfirm: (LocalDate, LocalTime, String) -> Unit
+) {
+    if (showContractDialog && serviceToContract != null) {
+        ContractDialog(
+            service = serviceToContract,
+            onDismiss = onDismiss,
+            onConfirm = onConfirm
         )
-        // Gradient overlay i text
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
-                    )
-                )
-        )
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(16.dp)
-        ) {
+    }
+}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ContractDialog(
+    service: ProviderService,
+    onDismiss: () -> Unit,
+    onConfirm: (LocalDate, LocalTime, String) -> Unit
+) {
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var selectedTime by remember { mutableStateOf(LocalTime.of(10, 0)) }
+    var description by remember { mutableStateOf("") }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
             Text(
-                text = service.name,
-                color = Color.White,
+                "Book ${service.name}",
                 fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
+                color = TopGradientEnd,
+                fontSize = 20.sp
             )
-            Text(
-                text = "€${service.price} / ${service.category?.name?.replace("_", " ") ?: "N/A"}",
-                color = Color.White.copy(alpha = 0.8f),
-                fontSize = 14.sp
-            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // 📅 Date Selection
+                OutlinedTextField(
+                    value = selectedDate.format(dateFormatter),
+                    onValueChange = { },
+                    readOnly = true,
+                    label = { Text("Select Date") },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.CalendarToday,
+                            contentDescription = "Pick date",
+                            tint = TopGradientEnd
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDatePicker = true }
+                )
+
+                // 🕐 Time Selection
+                OutlinedTextField(
+                    value = selectedTime.format(timeFormatter),
+                    onValueChange = { },
+                    readOnly = true,
+                    label = { Text("Select Time") },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = "Pick time",
+                            tint = TopGradientEnd
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showTimePicker = true }
+                )
+
+                // 📝 Description
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Additional Notes (Optional)") },
+                    maxLines = 3,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // 💰 Price Display
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = BrandBlue.copy(alpha = 0.1f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Total Price:", fontWeight = FontWeight.Medium)
+                        Text(
+                            "€${service.price}",
+                            fontWeight = FontWeight.Bold,
+                            color = TopGradientEnd,
+                            fontSize = 20.sp
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(selectedDate, selectedTime, description) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = TopGradientEnd)
+            ) {
+                Text("Confirm Booking", color = Color.White)
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Cancel", color = TopGradientEnd)
+            }
+        },
+        shape = RoundedCornerShape(20.dp),
+        containerColor = Color.White
+    )
+
+    // 📅 Date Picker Dialog
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = System.currentTimeMillis()
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            selectedDate = LocalDate.ofEpochDay(millis / (1000 * 60 * 60 * 24))
+                        }
+                        showDatePicker = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = TopGradientEnd)
+                ) {
+                    Text("OK", color = Color.White)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel", color = TopGradientEnd)
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    // 🕐 Time Picker Dialog
+    if (showTimePicker) {
+        val timePickerState = rememberTimePickerState(
+            initialHour = selectedTime.hour,
+            initialMinute = selectedTime.minute,
+            is24Hour = true
+        )
+
+        // Sa title parametrom
+        TimePickerDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        selectedTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                        showTimePicker = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = TopGradientEnd)
+                ) {
+                    Text("OK", color = Color.White)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showTimePicker = false }) {
+                    Text("Cancel", color = TopGradientEnd)
+                }
+            },
+            title = {
+                Text(
+                    "Select Time",
+                    modifier = Modifier.padding(top = 16.dp, start = 24.dp, end = 24.dp)
+                )
+            }
+        ) {
+            TimePicker(state = timePickerState)
         }
     }
 }
-
 // FavoritesScreen
 @Composable
 fun FavoritesScreen(navController: NavController) {

@@ -64,7 +64,11 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
-
+    // Add for LocalDate/LocalTime support
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
+// Material 3 date/time pickers (ako već nemate)
+    implementation("androidx.compose.material3:material3:1.1.1")
+    implementation("androidx.compose.material3:material3-window-size-class:1.1.1")
     // Navigation
     implementation(libs.androidx.navigation.compose)
 
