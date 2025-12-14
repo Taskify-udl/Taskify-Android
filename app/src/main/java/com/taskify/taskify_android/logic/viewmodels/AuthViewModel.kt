@@ -12,6 +12,7 @@ import com.taskify.taskify_android.data.models.entities.Customer
 import com.taskify.taskify_android.data.models.entities.Provider
 import com.taskify.taskify_android.data.models.entities.ProviderService
 import com.taskify.taskify_android.data.models.entities.ServiceType
+import com.taskify.taskify_android.data.models.entities.ServiceTypeLookup
 import com.taskify.taskify_android.data.models.entities.User
 import com.taskify.taskify_android.data.models.entities.UserDraft
 import com.taskify.taskify_android.data.repository.AuthRepository
@@ -258,10 +259,19 @@ class AuthViewModel(
         viewModelScope.launch {
             val providerId = current.id
 
+            // FIX 1: Trobar l'ID de la categoria a partir de l'enum
+            Log.d("AuthViewModel", "Category name: ${category.name}")
+            val categoryId = ServiceTypeLookup.enumToId[category.name]
+
+            if (categoryId == null) {
+                onError("Invalid category selected: ID not found for ${category.name}")
+                return@launch
+            }
+
             // Cridem al repositori amb el nom de l'enum com a categoria (String)
             when (val result = repository.createService(
                 title = title,
-                category = category.name, // Enviem l'string del ServiceType (p. ex., "PLUMBING")
+                categoryIds = listOf(categoryId),
                 description = description,
                 price = price,
                 providerId = providerId
@@ -353,27 +363,50 @@ class AuthViewModel(
             return
         }
 
-        val updatedService = serviceToUpdate.copy(
-            name = newTitle,
-            category = newCategory,
-            description = newDescription,
-            price = newPrice,
-            updatedAt = LocalDateTime.now()
-        )
+        // FIX 1: Trobem l'ID de la nova categoria a partir de l'enum
+        val categoryId = ServiceTypeLookup.enumToId[newCategory.name]
 
-        // Actualitzar la llista de serveis
-        val updatedServices = current.services.map {
-            if (it.id == serviceToUpdate.id) updatedService else it
+        if (categoryId == null) {
+            onError("Invalid category selected: ID not found.")
+            return
         }
 
-        // Actualitzar el provider amb la nova llista
-        val updatedProvider = current.copy(services = updatedServices)
-        _currentUser.value = updatedProvider
-        _profileState.value = Resource.Success(updatedProvider)
+        // FIX 2: Creació del cos de la petició (Map amb snake_case/camps API)
+        val updates = mutableMapOf<String, Any?>(
+            "name" to newTitle,
+            "description" to newDescription,
+            "price" to newPrice,
+            // Enviar la categoria com a llista d'IDs, que és el format JSON esperat
+            "categories" to listOf(categoryId)
+        )
 
-        onSuccess(updatedService)
+        viewModelScope.launch {
+            // La crida al repositori passa l'ID del servei i el cos de la petició
+            when (val result = repository.updateService(serviceToUpdate.id, updates)) {
+                is Resource.Success -> {
+                    val updatedServiceFromApi = result.data
+
+                    // FIX 3: Actualitzar la llista local amb el servei confirmat per l'API
+                    val updatedServices = current.services.map {
+                        if (it.id == updatedServiceFromApi.id) updatedServiceFromApi else it
+                    }
+
+                    // Actualitzar el provider amb la nova llista i l'estat local
+                    val updatedProvider = current.copy(services = updatedServices)
+                    _currentUser.value = updatedProvider
+                    _profileState.value = Resource.Success(updatedProvider)
+
+                    onSuccess(updatedServiceFromApi)
+                }
+                is Resource.Error -> {
+                    onError(result.message)
+                }
+                is Resource.Loading -> {
+                    // Es podria afegir gestió de loading
+                }
+            }
+        }
     }
-
     fun resetState() {
         _authState.value = AuthUiState()
     }

@@ -36,11 +36,14 @@ import com.taskify.taskify_android.ui.theme.TopGradientEnd
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -56,8 +59,11 @@ import com.taskify.taskify_android.data.models.entities.ServiceType
 import com.taskify.taskify_android.data.models.entities.User
 import com.taskify.taskify_android.ui.theme.*
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import com.taskify.taskify_android.data.models.entities.ServiceTypeLookup
 import com.taskify.taskify_android.data.repository.Resource
 import java.util.Locale
+import java.util.Locale.getDefault
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -363,17 +369,21 @@ fun OffersScreen(
 
         when (allServicesState) {
             is Resource.Loading -> {
-                Box(Modifier
-                    .fillMaxWidth()
-                    .weight(1f), Alignment.Center) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f), Alignment.Center
+                ) {
                     CircularProgressIndicator(color = BrandBlue)
                 }
             }
 
             is Resource.Error -> {
-                Box(Modifier
-                    .fillMaxWidth()
-                    .weight(1f), Alignment.Center) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f), Alignment.Center
+                ) {
                     Text(
                         "Error loading offers: ${(allServicesState as Resource.Error).message}",
                         color = Color.Red,
@@ -393,9 +403,11 @@ fun OffersScreen(
                 }
 
                 if (filteredServices.isEmpty()) { // Utilitzem filteredServices
-                    Box(Modifier
-                        .fillMaxWidth()
-                        .weight(1f), Alignment.Center) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .weight(1f), Alignment.Center
+                    ) {
                         Text("No services found.", color = Color.Gray)
                     }
                 } else {
@@ -429,7 +441,8 @@ fun OffersScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("Price: €${offer.price}")
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Category: ${offer.category?.name?.replace("_", " ") ?: "N/A"}")
+                    val categoryDisplayName = offer.categoryNames?.firstOrNull() ?: "N/A"
+                    Text("Category: $categoryDisplayName")
                 }
             },
             confirmButton = {
@@ -494,7 +507,7 @@ fun ServiceOfferCard(service: ProviderService, onClick: () -> Unit) {
                 fontSize = 18.sp
             )
             Text(
-                text = "€${service.price} / ${service.category?.name?.replace("_", " ") ?: "N/A"}",
+                text = "€${service.price} / ${service.categoryNames?.firstOrNull() ?: "N/A"}",
                 color = Color.White.copy(alpha = 0.8f),
                 fontSize = 14.sp
             )
@@ -802,14 +815,9 @@ fun CreateServiceScreen(
         }
         return
     }
-    Log.d("CreateServiceScreen", "User: $user")
 
     // Rol del user
     val isProvider = user is Provider || user.role.toString() == "PROVIDER"
-    Log.d("CreateServiceScreen", "Is Provider: $isProvider")
-    Log.d("CreateServiceScreen", "User Role: ${user.role}")
-
-
     if (!isProvider) {
         // ❌ CUSTOMER → Missatge "Become a provider"
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -990,49 +998,100 @@ fun ServiceCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFFF2F6FF))
-            .border(1.dp, TopGradientEnd.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
+            .background(Color.White) // Fons blanc per contrast
+            .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(14.dp)) // Bordura subtil
             .clickable { onClick() }
-            .padding(18.dp)
+            .padding(16.dp)
     ) {
-        Column {
-            // NAME
-            Text(
-                service.name,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = Dark
-            )
+        Column(modifier = Modifier.fillMaxWidth()) {
 
-            Spacer(Modifier.height(6.dp))
-
-            // CATEGORY (safe)
-            Text(
-                (service.category?.name ?: "OTHER").replace("_", " "),
-                fontSize = 14.sp,
-                color = TopGradientEnd
-            )
-
-            // DESCRIPTION (si existeix)
-            if (!service.description.isNullOrBlank()) {
-                Spacer(Modifier.height(6.dp))
+            // 🏷️ Títol i Fletxa
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    service.description,
-                    fontSize = 14.sp,
-                    color = Color.DarkGray
+                    service.name,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 18.sp,
+                    color = Dark
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                    contentDescription = "Edit",
+                    tint = TopGradientEnd,
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
             Spacer(Modifier.height(10.dp))
 
-            // UPDATED DATE (safe)
-            val updatedDate = service.updatedAt?.toLocalDate()?.toString() ?: "N/A"
+            // ------------------ Dades del Servei ------------------
 
-            Text(
-                "Updated: $updatedDate",
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
+            // 💰 Preu
+            val price = service.price.toString() ?: "0"
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.AttachMoney,
+                    contentDescription = "Price",
+                    tint = TopGradientEnd,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    "Price: $price €",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = TopGradientEnd
+                )
+            }
+
+            Spacer(Modifier.height(6.dp))
+
+            // 🗂️ Categoria
+            val categoryDisplayName = service.categoryNames?.firstOrNull() ?: "OTHER"
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Category,
+                    contentDescription = "Category",
+                    tint = Color.Gray,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    categoryDisplayName,
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+            }
+
+            // 📝 Descripció
+            if (!service.description.isNullOrBlank()) {
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.Top) {
+                    Icon(
+                        Icons.Default.Description,
+                        contentDescription = "Description",
+                        tint = Dark.copy(alpha = 0.7f),
+                        modifier = Modifier
+                            .size(16.dp)
+                            .padding(top = 2.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        service.description,
+                        fontSize = 14.sp,
+                        color = Dark.copy(alpha = 0.8f),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
         }
     }
 }
@@ -1048,8 +1107,16 @@ fun ServiceDialog(
     var title by remember { mutableStateOf(initial?.name ?: "") }
     var description by remember { mutableStateOf(initial?.description ?: "") }
     var price by remember { mutableStateOf(initial?.price?.toString() ?: "") }
+    var selectedCategory by remember {
+        mutableStateOf(
+            initial?.categoryNames?.firstOrNull()?.let { categoryName ->
+                ServiceTypeLookup.nameToEnum(categoryName)
+            } ?: ServiceType.OTHER
+        )
+    }
 
-    var selectedCategory by remember { mutableStateOf(initial?.category ?: ServiceType.OTHER) }
+    // Configuració de colors per als OutlinedTextFields
+    val textFieldColors = taskifyOutlinedTextFieldColors()
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1057,23 +1124,29 @@ fun ServiceDialog(
             Text(
                 text = if (initial == null) "Create New Service" else "Edit Service",
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp
+                fontSize = 20.sp,
+                color = TopGradientEnd
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Title") },
-                    singleLine = true
+                    label = { Text("Title (Required)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = textFieldColors
                 )
 
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Description") }
+                    label = { Text("Description") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = textFieldColors,
+                    maxLines = 3
                 )
 
                 // ---------------- ExposedDropdownMenuBox ----------------
@@ -1083,12 +1156,16 @@ fun ServiceDialog(
                     onExpandedChange = { expanded = !expanded }
                 ) {
                     OutlinedTextField(
-                        value = selectedCategory.name.replace("_", " "),
+                        value = selectedCategory.name.replace("_", " ")
+                            .lowercase(Locale.getDefault()).capitalize(),
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Category") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        modifier = Modifier.menuAnchor() // important!
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth(),
+                        colors = textFieldColors
                     )
                     ExposedDropdownMenu(
                         expanded = expanded,
@@ -1096,7 +1173,12 @@ fun ServiceDialog(
                     ) {
                         ServiceType.entries.forEach { type ->
                             DropdownMenuItem(
-                                text = { Text(type.name.replace("_", " ")) },
+                                text = {
+                                    Text(
+                                        type.name.replace("_", " ").lowercase(Locale.getDefault())
+                                            .capitalize()
+                                    )
+                                },
                                 onClick = {
                                     selectedCategory = type
                                     expanded = false
@@ -1115,25 +1197,36 @@ fun ServiceDialog(
                     },
                     label = { Text("Price (€)") },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = textFieldColors
                 )
             }
         },
         confirmButton = {
-            Button(onClick = {
-                val p: Int = price.toInt()
-                if (initial == null) onCreate(title, selectedCategory, description, p)
-                else onEdit(initial, title, selectedCategory, description, p)
-            }) {
-                Text(if (initial == null) "Create" else "Save Changes")
+            Button(
+                onClick = {
+                    val p: Int = price.toIntOrNull() ?: 0
+                    if (initial == null) onCreate(title, selectedCategory, description, p)
+                    else onEdit(initial, title, selectedCategory, description, p)
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = TopGradientEnd)
+            ) {
+                Text(if (initial == null) "Create" else "Save Changes", color = Color.White)
             }
         },
         dismissButton = {
-            OutlinedButton(onClick = onDismiss) { Text("Cancel") }
-        }
+            OutlinedButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = TopGradientEnd),
+                border = BorderStroke(1.dp, TopGradientEnd)
+            ) {
+                Text("Cancel")
+            }
+        },
+        shape = RoundedCornerShape(16.dp)
     )
 }
-
 
 // Settings
 @Composable

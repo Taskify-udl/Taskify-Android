@@ -1,5 +1,8 @@
 package com.taskify.taskify_android.ui.theme
 
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 val Purple80 = Color(0xFFD0BCFF)
@@ -40,3 +43,16 @@ val BrandBlue = Color(0xFF0F0F0F)
 // 🖤 Dodatne nijanse
 val CardDark = Color(0xFF1E1E1E)
 val CardGray = Color(0xFF2C2C2C)
+
+
+@Composable
+fun taskifyOutlinedTextFieldColors(): TextFieldColors {
+    return OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = TopGradientEnd,
+        unfocusedBorderColor = Color.LightGray,
+        focusedLabelColor = TopGradientEnd,
+        unfocusedLabelColor = Color.Gray,
+        // Pots afegir altres colors si són rellevants
+        cursorColor = TopGradientEnd
+    )
+}

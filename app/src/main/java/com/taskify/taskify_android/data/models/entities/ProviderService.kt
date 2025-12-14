@@ -9,22 +9,12 @@ data class ProviderService(
     val providerId: Long,
     val name: String,
     val description: String?,
-    val category: ServiceType? = ServiceType.OTHER,
+    @SerializedName("categories")
+    val categoryIds: List<Int>? = emptyList(),
+    @SerializedName("category_names")
+    val categoryNames: List<String>? = emptyList(),
     val price: Int = 0,
     val createdAt: LocalDateTime? = null,
     val updatedAt: LocalDateTime? = null
 )
 
-
-// Enum representing different categories of services
-enum class ServiceType {
-    CLEANING,
-    PLUMBING,
-    ELECTRICITY,
-    GARDENING,
-    IT_SUPPORT,
-    EDUCATION,
-    HEALTHCARE,
-    DELIVERY,
-    OTHER
-}

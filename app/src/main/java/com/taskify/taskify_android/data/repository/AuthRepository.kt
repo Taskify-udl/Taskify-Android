@@ -141,10 +141,9 @@ class AuthRepository(private val api: ApiService) {
     }
 
     // ---------- CREATE SERVICE ----------
-    // Refactoritzat per retornar Resource<ProviderService>
     suspend fun createService(
         title: String,
-        category: String,
+        categoryIds: List<Int>,
         description: String,
         price: Int,
         providerId: Long // Hem eliminat 'context' que no s'utilitzava aquí
@@ -156,7 +155,7 @@ class AuthRepository(private val api: ApiService) {
             name = title,
             description = description,
             provider = providerId,
-            category = category,
+            categories = categoryIds, // FIX: S'envia la llista d'IDs
             price = price,
             createdAt = now,
             updatedAt = now
@@ -165,11 +164,14 @@ class AuthRepository(private val api: ApiService) {
 
         return try {
             val response = api.createService(body)
+            Log.d("AuthRepository", "createService response: ${response.code()} ${response.message()}")
+
 
             if (response.isSuccessful && response.body() != null) {
                 Resource.Success(response.body()!!)
             } else {
                 val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                Log.e("AuthRepository", "Error creating service: ${response.code()} - $errorBody")
                 Resource.Error("Error creating service: ${response.code()} - $errorBody")
             }
         } catch (e: Exception) {
@@ -186,6 +188,27 @@ class AuthRepository(private val api: ApiService) {
                 Resource.Success(response.body()!!)
             } else {
                 Resource.Error("Failed to load services: ${response.code()}")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    suspend fun updateService(
+        serviceId: Int,
+        updates: Map<String, Any?>
+    ): Resource<ProviderService> {
+        Log.d("AuthRepository", "updateService request: Service ID $serviceId, updates: $updates")
+
+        return try {
+            // La crida a l'API requereix l'ID i el cos de la petició
+            val response = api.updateService(serviceId, updates)
+
+            if (response.isSuccessful && response.body() != null) {
+                Resource.Success(response.body()!!)
+            } else {
+                val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                Resource.Error("Error updating service: ${response.code()} - $errorBody")
             }
         } catch (e: Exception) {
             Resource.Error("Network error: ${e.localizedMessage}")
