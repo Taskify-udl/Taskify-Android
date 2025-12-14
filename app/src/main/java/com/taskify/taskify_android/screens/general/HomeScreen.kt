@@ -467,7 +467,6 @@ fun OffersScreen(
     }
 }
 
-// NOU: Component reutilitzable per mostrar una oferta
 @Composable
 fun ServiceOfferCard(service: ProviderService, onClick: () -> Unit) {
     Box(
