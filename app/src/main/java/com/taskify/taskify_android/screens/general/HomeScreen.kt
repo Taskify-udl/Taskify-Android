@@ -84,7 +84,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
         context.getString(R.string.tab_settings)
     )
 
-    // 🌈 Animated gradient background (el deixem igual)
+    // 🌈 Animated gradient background
     val infiniteTransition = rememberInfiniteTransition(label = "homeBgAnim")
     val progress by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -124,7 +124,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                 )
         )
 
-        // 🔹 Scaffold amb topBar i bottomBar
+        // 🔹 Scaffold sa topBar i bottomBar
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
@@ -232,14 +232,14 @@ fun ServiceOfferCard(
             .clip(RoundedCornerShape(16.dp))
             .clickable { onClick() }
     ) {
-        // Imatge Placeholder
+        // Slika servisa
         Image(
             painter = painterResource(id = R.drawable.worker1),
             contentDescription = service.name,
             contentScale = ContentScale.Crop,
             modifier = Modifier.matchParentSize()
         )
-        // Gradient overlay i text
+        // Gradient overlay i tekst
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -296,21 +296,20 @@ fun OffersScreen(
     var selectedOffer by remember { mutableStateOf<ProviderService?>(null) }
     var showContractDialog by remember { mutableStateOf(false) }
     var serviceToContract by remember { mutableStateOf<ProviderService?>(null) }
-    val context = LocalContext.current // Dodajemo kontekst ovdje
+    val context = LocalContext.current
 
-    // Càrrega inicial dels serveis
+    // Učitavanje servisa
     LaunchedEffect(Unit) {
         authViewModel.getServices()
     }
 
-    // Ovo je važno: Logika za obradu potvrde rezervacije
+    // Logika za potvrdu rezervacije
     val onContractConfirmed: (LocalDate, LocalTime, String) -> Unit = { date, time, description ->
         Toast.makeText(
             context,
             "Booking confirmed for ${serviceToContract?.name ?: "service"} on ${date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))} at ${time.format(DateTimeFormatter.ofPattern("HH:mm"))}",
             Toast.LENGTH_LONG
         ).show()
-        // Resetujemo stanja nakon što se Toast prikaže
         showContractDialog = false
         serviceToContract = null
     }
@@ -446,7 +445,7 @@ fun OffersScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔸 Serveis disponibles
+        // 🔸 Dostupni servisi
         Text("Available Services", fontWeight = FontWeight.SemiBold, color = TopGradientEnd)
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -508,7 +507,7 @@ fun OffersScreen(
         }
     }
 
-    // 🪟 Popup per mostrar detalls
+    // 🪟 Popup za detalje servisa
     if (selectedOffer != null) {
         val offer = selectedOffer!!
         AlertDialog(
@@ -544,7 +543,7 @@ fun OffersScreen(
         )
     }
 
-    // 🆕 Contract Dialog for booking
+    // 🆕 Contract Dialog za rezervaciju
     if (showContractDialog && serviceToContract != null) {
         ContractDialog(
             service = serviceToContract!!,
@@ -552,25 +551,11 @@ fun OffersScreen(
                 showContractDialog = false
                 serviceToContract = null
             },
-            onConfirm = onContractConfirmed // Koristimo predefinisanu funkciju
+            onConfirm = onContractConfirmed
         )
     }
 }
-@Composable
-fun ContractDialogLogic(
-    showContractDialog: Boolean,
-    serviceToContract: ProviderService?,
-    onDismiss: () -> Unit,
-    onConfirm: (LocalDate, LocalTime, String) -> Unit
-) {
-    if (showContractDialog && serviceToContract != null) {
-        ContractDialog(
-            service = serviceToContract,
-            onDismiss = onDismiss,
-            onConfirm = onConfirm
-        )
-    }
-}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContractDialog(
@@ -731,7 +716,6 @@ fun ContractDialog(
             is24Hour = true
         )
 
-        // Sa title parametrom
         TimePickerDialog(
             onDismissRequest = { showTimePicker = false },
             confirmButton = {
@@ -761,6 +745,7 @@ fun ContractDialog(
         }
     }
 }
+
 // FavoritesScreen
 @Composable
 fun FavoritesScreen(navController: NavController) {
@@ -1054,7 +1039,7 @@ fun CreateServiceScreen(
     authViewModel: AuthViewModel,
     navController: NavController
 ) {
-    // si encara no ha arribat l'usuari
+    // Ako korisnik još nije učitan
     if (user == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
@@ -1063,14 +1048,13 @@ fun CreateServiceScreen(
     }
     Log.d("CreateServiceScreen", "User: $user")
 
-    // Rol del user
+    // Provera da li je korisnik provider
     val isProvider = user is Provider || user.role.toString() == "PROVIDER"
     Log.d("CreateServiceScreen", "Is Provider: $isProvider")
     Log.d("CreateServiceScreen", "User Role: ${user.role}")
 
-
     if (!isProvider) {
-        // ❌ CUSTOMER → Missatge "Become a provider"
+        // ❌ CUSTOMER → Postani provider
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
@@ -1100,7 +1084,7 @@ fun CreateServiceScreen(
             }
         }
     } else {
-        // ✅ PROVIDER → Pantalla per gestionar serveis
+        // ✅ PROVIDER → Ekran za upravljanje servisima
         ProviderServiceScreen(
             authViewModel = authViewModel
         )
@@ -1117,7 +1101,7 @@ fun ProviderServiceScreen(authViewModel: AuthViewModel) {
     var showCreateDialog by remember { mutableStateOf(false) }
     var serviceToEdit by remember { mutableStateOf<ProviderService?>(null) }
 
-    // 1. CÀRREGA INICIAL
+    // Učitavanje servisa
     LaunchedEffect(Unit) {
         authViewModel.loadProviderServices()
     }
@@ -1149,7 +1133,7 @@ fun ProviderServiceScreen(authViewModel: AuthViewModel) {
 
         Spacer(Modifier.height(22.dp))
 
-        // 2. GESTIÓ D'ESTATS DE CÀRREGA
+        // Stanja učitavanja
         when (serviceListState) {
             is Resource.Loading -> {
                 Box(Modifier.fillMaxSize(), Alignment.Center) {
@@ -1189,7 +1173,7 @@ fun ProviderServiceScreen(authViewModel: AuthViewModel) {
         }
     }
 
-    // ============= POPUP CREAR =============
+    // ============= POPUP ZA KREIRANJE =============
     if (showCreateDialog) {
         ServiceDialog(
             onDismiss = { showCreateDialog = false },
@@ -1212,7 +1196,7 @@ fun ProviderServiceScreen(authViewModel: AuthViewModel) {
         )
     }
 
-    // ============= POPUP EDITAR =============
+    // ============= POPUP ZA IZMENU =============
     if (serviceToEdit != null) {
         val editService = serviceToEdit!!
 
@@ -1272,7 +1256,7 @@ fun ServiceCard(
                 color = TopGradientEnd
             )
 
-            // DESCRIPTION (si existeix)
+            // DESCRIPTION (ako postoji)
             if (!service.description.isNullOrBlank()) {
                 Spacer(Modifier.height(6.dp))
                 Text(
@@ -1347,7 +1331,7 @@ fun ServiceDialog(
                         readOnly = true,
                         label = { Text("Category") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        modifier = Modifier.menuAnchor() // important!
+                        modifier = Modifier.menuAnchor()
                     )
                     ExposedDropdownMenu(
                         expanded = expanded,
@@ -1393,15 +1377,14 @@ fun ServiceDialog(
     )
 }
 
-
-// Settings
+// Settings Screen
 @Composable
 fun SettingsScreen(navController: NavController, authViewModel: AuthViewModel) {
     val context = LocalContext.current
     var showLanguageDialog by remember { mutableStateOf(false) }
-    var showLogoutDialog by remember { mutableStateOf(false) } // Stanje za LogOut dijalog
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
-    // 🌙 STANJE TEME: Čita se iz ThemeState singletona
+    // 🌙 TEME: Čita se iz ThemeState singletona
     val isDark by remember { ThemeState.isDarkTheme }
 
     Column(
@@ -1412,13 +1395,11 @@ fun SettingsScreen(navController: NavController, authViewModel: AuthViewModel) {
     ) {
         // 👤 Profilna slika centrirana
         Image(
-            // Pretpostavljena slika, zamenite R.drawable.profilepic po potrebi
             painter = painterResource(id = R.drawable.profilepic),
             contentDescription = stringResource(R.string.user_logo),
             modifier = Modifier
                 .size(100.dp)
                 .clip(CircleShape)
-                // Koristite boje iz vašeg theme paketa
                 .background(Color(0xFFE7F1FB))
                 .border(2.dp, Color(0xFFD1E8FF), CircleShape)
         )
@@ -1449,7 +1430,7 @@ fun SettingsScreen(navController: NavController, authViewModel: AuthViewModel) {
             // 🔐 Security
             item {
                 SettingItem(stringResource(R.string.security)) {
-                    navController.navigate("securityScreen") // ⬅️ NAVIGACIJA NA NOVI EKRAN
+                    navController.navigate("securityScreen")
                 }
             }
 
@@ -1463,7 +1444,7 @@ fun SettingsScreen(navController: NavController, authViewModel: AuthViewModel) {
                 }
             }
 
-            // 🌙 DARK MODE OPCIJA SA PREKIDAČEM
+            // 🌙 DARK MODE SA PREKIDAČEM
             item {
                 Row(
                     modifier = Modifier
@@ -1487,9 +1468,8 @@ fun SettingsScreen(navController: NavController, authViewModel: AuthViewModel) {
                         fontSize = 16.sp
                     )
                     Switch(
-                        checked = isDark, // ✅ ISPRAVNO: Varijabla bez zagrada
+                        checked = isDark,
                         onCheckedChange = { isChecked ->
-                            // ⬅️ MENJA STANJE TEME U ThemeState
                             ThemeState.isDarkTheme.value = isChecked
                         },
                         colors = SwitchDefaults.colors(
@@ -1501,17 +1481,17 @@ fun SettingsScreen(navController: NavController, authViewModel: AuthViewModel) {
                 Spacer(Modifier.height(8.dp))
             }
 
-            // ❌ LOGOUT STAVKA: Postavlja stanje za prikaz dijaloga
+            // ❌ LOGOUT
             item {
                 SettingItem(stringResource(R.string.logout), highlight = true) {
-                    showLogoutDialog = true // Prikazuje LogOut dijalog
+                    showLogoutDialog = true
                 }
             }
         }
     }
 
     // ===============================================
-    // ➡️ DIJALOG ZA POTVRDU ODJAVE
+    // ➡️ DIALOG ZA POTVRDU ODJAVE
     // ===============================================
     if (showLogoutDialog) {
         AlertDialog(
@@ -1521,14 +1501,14 @@ fun SettingsScreen(navController: NavController, authViewModel: AuthViewModel) {
             confirmButton = {
                 Button(
                     onClick = {
-                        showLogoutDialog = false // Zatvara dijalog
+                        showLogoutDialog = false
 
                         // 1. Pozovi logiku odjave
                         authViewModel.logout(context)
 
-                        // 2. Navigacija na ispravnu rutu i čišćenje steka
+                        // 2. Navigacija na auth ekran
                         navController.navigate("authScreen") {
-                            popUpTo("homeScreen") { inclusive = true } // Briše Home iz steka
+                            popUpTo("homeScreen") { inclusive = true }
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
@@ -1553,7 +1533,6 @@ fun SettingsScreen(navController: NavController, authViewModel: AuthViewModel) {
             title = { Text("Select Language") },
             text = {
                 Column {
-                    // Pretpostavljene funkcije za promenu lokalizacije
                     Text("English", modifier = Modifier.clickable { updateLocale(context, "en"); showLanguageDialog = false })
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("Català", modifier = Modifier.clickable { updateLocale(context, "ca"); showLanguageDialog = false })
@@ -1612,12 +1591,9 @@ fun SettingItem(title: String, highlight: Boolean = false, onClick: () -> Unit =
     }
 }
 
-// ... (Koristite SettingItem komponentu koju već imate)
-
 // ===============================================
-// 🔒 SECURITY SCREEN
+// 🔒 SECURITY SCREEN (iz vašeg brancha)
 // ===============================================
-
 @Composable
 fun SecurityScreen(navController: NavController, authViewModel: AuthViewModel) {
     val context = LocalContext.current
@@ -1649,7 +1625,7 @@ fun SecurityScreen(navController: NavController, authViewModel: AuthViewModel) {
         )
         Spacer(Modifier.height(8.dp))
 
-        // Možete dodati "Aktivne sesije" kao placeholder
+        // Aktivne sesije
         SettingItem(
             title = stringResource(R.string.security_active_sessions),
             onClick = { Toast.makeText(context, context.getString(R.string.security_active_sessions_placeholder), Toast.LENGTH_SHORT).show() }
@@ -1659,7 +1635,7 @@ fun SecurityScreen(navController: NavController, authViewModel: AuthViewModel) {
         Divider()
         Spacer(Modifier.height(16.dp))
 
-        // ⚠️ Opcija za brisanje naloga je označena crvenom bojom
+        // ⚠️ Brisanje naloga
         SettingItem(
             title = stringResource(R.string.security_delete_account),
             highlight = true,
@@ -1692,7 +1668,6 @@ fun SecurityScreen(navController: NavController, authViewModel: AuthViewModel) {
 // ===============================================
 // 🔑 DIJALOG: PROMENA LOZINKE
 // ===============================================
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChangePasswordDialog(authViewModel: AuthViewModel, onDismiss: () -> Unit) {
@@ -1766,7 +1741,6 @@ fun ChangePasswordDialog(authViewModel: AuthViewModel, onDismiss: () -> Unit) {
 // ===============================================
 // 🗑️ DIJALOG: BRISANJE NALOGA
 // ===============================================
-
 @Composable
 fun DeleteAccountDialog(
     authViewModel: AuthViewModel,
@@ -1797,7 +1771,6 @@ fun DeleteAccountDialog(
                         onSuccess = {
                             Toast.makeText(context, context.getString(R.string.security_delete_account_success), Toast.LENGTH_LONG).show()
                             onDismiss()
-                            // Navigacija na auth ekran nakon brisanja
                             navController.navigate("authScreen") {
                                 popUpTo("homeScreen") { inclusive = true }
                             }
