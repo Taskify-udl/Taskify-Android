@@ -1,6 +1,5 @@
 package com.taskify.taskify_android.screens.general
 
-
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
@@ -20,6 +19,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerDialog
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,6 +47,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.ui.draw.clip
@@ -63,6 +69,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.taskify.taskify_android.data.models.entities.ServiceTypeLookup
 import com.taskify.taskify_android.data.repository.Resource
 import java.util.Locale
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale.getDefault
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,7 +90,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
         context.getString(R.string.tab_settings)
     )
 
-    // 🌈 Animated gradient background (el deixem igual)
+    // 🌈 Animated gradient background
     val infiniteTransition = rememberInfiniteTransition(label = "homeBgAnim")
     val progress by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -121,7 +130,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                 )
         )
 
-        // 🔹 Scaffold amb topBar i bottomBar
+        // 🔹 Scaffold sa topBar i bottomBar
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
@@ -177,13 +186,12 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                     1 -> FavoritesScreen(navController)
                     2 -> CreateServiceScreen(user, authViewModel, navController)
                     3 -> OrdersScreen()
-                    4 -> SettingsScreen(navController = navController)
+                    4 -> SettingsScreen(navController = navController, authViewModel = authViewModel)
                 }
             }
         }
     }
 }
-
 
 // Bottom navigation bar
 @Composable
@@ -216,6 +224,72 @@ fun BottomNavigationBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
     }
 }
 
+@Composable
+fun ServiceOfferCard(
+    service: ProviderService,
+    onContractClick: () -> Unit,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(180.dp)
+            .padding(vertical = 6.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onClick() }
+    ) {
+        // Slika servisa
+        Image(
+            painter = painterResource(id = R.drawable.worker1),
+            contentDescription = service.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.matchParentSize()
+        )
+        // Gradient overlay i tekst
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                    )
+                )
+        )
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+        ) {
+            Text(
+                text = service.name,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+            Text(
+                text = "€${service.price} / ${service.category?.name?.replace("_", " ") ?: "N/A"}",
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 14.sp
+            )
+        }
+
+        // 🔘 Book Button overlay
+        Button(
+            onClick = onContractClick,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+                .height(40.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = TopGradientEnd,
+                contentColor = Color.White
+            )
+        ) {
+            Text("Book Now", fontWeight = FontWeight.Medium)
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OffersScreen(
@@ -226,10 +300,24 @@ fun OffersScreen(
 ) {
     val allServicesState by authViewModel.serviceListState.collectAsState()
     var selectedOffer by remember { mutableStateOf<ProviderService?>(null) }
+    var showContractDialog by remember { mutableStateOf(false) }
+    var serviceToContract by remember { mutableStateOf<ProviderService?>(null) }
+    val context = LocalContext.current
 
-    // Càrrega inicial dels serveis
+    // Učitavanje servisa
     LaunchedEffect(Unit) {
-        authViewModel.getServices() // CRIDA A LA NOVA FUNCIÓ
+        authViewModel.getServices()
+    }
+
+    // Logika za potvrdu rezervacije
+    val onContractConfirmed: (LocalDate, LocalTime, String) -> Unit = { date, time, description ->
+        Toast.makeText(
+            context,
+            "Booking confirmed for ${serviceToContract?.name ?: "service"} on ${date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))} at ${time.format(DateTimeFormatter.ofPattern("HH:mm"))}",
+            Toast.LENGTH_LONG
+        ).show()
+        showContractDialog = false
+        serviceToContract = null
     }
 
     Column(
@@ -251,7 +339,7 @@ fun OffersScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔹 Service Categories (ikonice koje se pomjeraju s desna na lijevo)
+        // 🔹 Service Categories
         Text(
             text = "Service Categories",
             fontWeight = FontWeight.SemiBold,
@@ -363,7 +451,7 @@ fun OffersScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔸 Serveis disponibles (Dades Reals)
+        // 🔸 Dostupni servisi
         Text("Available Services", fontWeight = FontWeight.SemiBold, color = TopGradientEnd)
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -396,7 +484,6 @@ fun OffersScreen(
                 val services = (allServicesState as Resource.Success).data
 
                 val filteredServices = services.filter { service ->
-                    // Filtra pel nom del servei o la descripció (ignorant majúscules/minúscules)
                     searchQuery.isBlank() ||
                             service.name.contains(searchQuery, ignoreCase = true) ||
                             (service.description?.contains(searchQuery, ignoreCase = true) ?: false)
@@ -416,10 +503,13 @@ fun OffersScreen(
                             .fillMaxWidth()
                             .weight(1f)
                     ) {
-                        items(filteredServices) { service -> // Utilitzem filteredServices
-                            // Component que mostra la targeta d'oferta
+                        items(filteredServices) { service ->
                             ServiceOfferCard(
                                 service = service,
+                                onContractClick = {
+                                    serviceToContract = service
+                                    showContractDialog = true
+                                },
                                 onClick = { selectedOffer = service }
                             )
                         }
@@ -429,7 +519,7 @@ fun OffersScreen(
         }
     }
 
-    // 🪟 Popup per mostrar detalls (adaptat a ProviderService)
+    // 🪟 Popup za detalje servisa
     if (selectedOffer != null) {
         val offer = selectedOffer!!
         AlertDialog(
@@ -465,44 +555,43 @@ fun OffersScreen(
             containerColor = Color.White
         )
     }
+
+    // 🆕 Contract Dialog za rezervaciju
+    if (showContractDialog && serviceToContract != null) {
+        ContractDialog(
+            service = serviceToContract!!,
+            onDismiss = {
+                showContractDialog = false
+                serviceToContract = null
+            },
+            onConfirm = onContractConfirmed
+        )
+    }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ServiceOfferCard(service: ProviderService, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(180.dp)
-            .padding(vertical = 6.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick() }
-    ) {
-        // Imatge Placeholder
-        Image(
-            painter = painterResource(id = R.drawable.worker1),
-            contentDescription = service.name,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.matchParentSize()
-        )
-        // Gradient overlay i text
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
-                    )
-                )
-        )
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(16.dp)
-        ) {
+fun ContractDialog(
+    service: ProviderService,
+    onDismiss: () -> Unit,
+    onConfirm: (LocalDate, LocalTime, String) -> Unit
+) {
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var selectedTime by remember { mutableStateOf(LocalTime.of(10, 0)) }
+    var description by remember { mutableStateOf("") }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
             Text(
-                text = service.name,
-                color = Color.White,
+                "Book ${service.name}",
                 fontWeight = FontWeight.Bold,
+                color = TopGradientEnd,
                 fontSize = 18.sp
             )
             Text(
@@ -510,6 +599,167 @@ fun ServiceOfferCard(service: ProviderService, onClick: () -> Unit) {
                 color = Color.White.copy(alpha = 0.8f),
                 fontSize = 14.sp
             )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // 📅 Date Selection
+                OutlinedTextField(
+                    value = selectedDate.format(dateFormatter),
+                    onValueChange = { },
+                    readOnly = true,
+                    label = { Text("Select Date") },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.CalendarToday,
+                            contentDescription = "Pick date",
+                            tint = TopGradientEnd
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDatePicker = true }
+                )
+
+                // 🕐 Time Selection
+                OutlinedTextField(
+                    value = selectedTime.format(timeFormatter),
+                    onValueChange = { },
+                    readOnly = true,
+                    label = { Text("Select Time") },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = "Pick time",
+                            tint = TopGradientEnd
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showTimePicker = true }
+                )
+
+                // 📝 Description
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Additional Notes (Optional)") },
+                    maxLines = 3,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // 💰 Price Display
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = BrandBlue.copy(alpha = 0.1f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Total Price:", fontWeight = FontWeight.Medium)
+                        Text(
+                            "€${service.price}",
+                            fontWeight = FontWeight.Bold,
+                            color = TopGradientEnd,
+                            fontSize = 20.sp
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(selectedDate, selectedTime, description) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = TopGradientEnd)
+            ) {
+                Text("Confirm Booking", color = Color.White)
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Cancel", color = TopGradientEnd)
+            }
+        },
+        shape = RoundedCornerShape(20.dp),
+        containerColor = Color.White
+    )
+
+    // 📅 Date Picker Dialog
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = System.currentTimeMillis()
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            selectedDate = LocalDate.ofEpochDay(millis / (1000 * 60 * 60 * 24))
+                        }
+                        showDatePicker = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = TopGradientEnd)
+                ) {
+                    Text("OK", color = Color.White)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel", color = TopGradientEnd)
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    // 🕐 Time Picker Dialog
+    if (showTimePicker) {
+        val timePickerState = rememberTimePickerState(
+            initialHour = selectedTime.hour,
+            initialMinute = selectedTime.minute,
+            is24Hour = true
+        )
+
+        TimePickerDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        selectedTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                        showTimePicker = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = TopGradientEnd)
+                ) {
+                    Text("OK", color = Color.White)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showTimePicker = false }) {
+                    Text("Cancel", color = TopGradientEnd)
+                }
+            },
+            title = {
+                Text(
+                    "Select Time",
+                    modifier = Modifier.padding(top = 16.dp, start = 24.dp, end = 24.dp)
+                )
+            }
+        ) {
+            TimePicker(state = timePickerState)
         }
     }
 }
@@ -807,7 +1057,7 @@ fun CreateServiceScreen(
     authViewModel: AuthViewModel,
     navController: NavController
 ) {
-    // si encara no ha arribat l'usuari
+    // Ako korisnik još nije učitan
     if (user == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
@@ -815,10 +1065,10 @@ fun CreateServiceScreen(
         return
     }
 
-    // Rol del user
+    // Provera da li je korisnik provider
     val isProvider = user is Provider || user.role.toString() == "PROVIDER"
     if (!isProvider) {
-        // ❌ CUSTOMER → Missatge "Become a provider"
+        // ❌ CUSTOMER → Postani provider
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
@@ -848,7 +1098,7 @@ fun CreateServiceScreen(
             }
         }
     } else {
-        // ✅ PROVIDER → Pantalla per gestionar serveis
+        // ✅ PROVIDER → Ekran za upravljanje servisima
         ProviderServiceScreen(
             authViewModel = authViewModel
         )
@@ -865,7 +1115,7 @@ fun ProviderServiceScreen(authViewModel: AuthViewModel) {
     var showCreateDialog by remember { mutableStateOf(false) }
     var serviceToEdit by remember { mutableStateOf<ProviderService?>(null) }
 
-    // 1. CÀRREGA INICIAL
+    // Učitavanje servisa
     LaunchedEffect(Unit) {
         authViewModel.loadProviderServices()
     }
@@ -897,7 +1147,7 @@ fun ProviderServiceScreen(authViewModel: AuthViewModel) {
 
         Spacer(Modifier.height(22.dp))
 
-        // 2. GESTIÓ D'ESTATS DE CÀRREGA
+        // Stanja učitavanja
         when (serviceListState) {
             is Resource.Loading -> {
                 Box(Modifier.fillMaxSize(), Alignment.Center) {
@@ -937,7 +1187,7 @@ fun ProviderServiceScreen(authViewModel: AuthViewModel) {
         }
     }
 
-    // ============= POPUP CREAR =============
+    // ============= POPUP ZA KREIRANJE =============
     if (showCreateDialog) {
         ServiceDialog(
             onDismiss = { showCreateDialog = false },
@@ -960,7 +1210,7 @@ fun ProviderServiceScreen(authViewModel: AuthViewModel) {
         )
     }
 
-    // ============= POPUP EDITAR =============
+    // ============= POPUP ZA IZMENU =============
     if (serviceToEdit != null) {
         val editService = serviceToEdit!!
 
@@ -1227,11 +1477,15 @@ fun ServiceDialog(
     )
 }
 
-// Settings
+// Settings Screen
 @Composable
-fun SettingsScreen(navController: NavController) {
+fun SettingsScreen(navController: NavController, authViewModel: AuthViewModel) {
     val context = LocalContext.current
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    // 🌙 TEME: Čita se iz ThemeState singletona
+    val isDark by remember { ThemeState.isDarkTheme }
 
     Column(
         modifier = Modifier
@@ -1259,18 +1513,13 @@ fun SettingsScreen(navController: NavController) {
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔹 Opcije
+        // 🔹 Opcije u listi
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // ⚙️ Settings
-            item {
-                SettingItem(stringResource(R.string.settings)) {}
-            }
-
             // 👤 Profile Info
             item {
                 SettingItem(stringResource(R.string.profile_info)) {
@@ -1280,47 +1529,115 @@ fun SettingsScreen(navController: NavController) {
 
             // 🔐 Security
             item {
-                SettingItem(stringResource(R.string.security)) {}
+                SettingItem(stringResource(R.string.security)) {
+                    navController.navigate("securityScreen")
+                }
             }
 
             // 📊 Dashboard
-            item {
-                SettingItem(stringResource(R.string.dashboard)) {}
-            }
+            item { SettingItem(stringResource(R.string.dashboard)) {} }
 
             // 🌐 Promjena jezika
             item {
-                SettingItem("Change Language") {
+                SettingItem(stringResource(R.string.language_Change)) {
                     showLanguageDialog = true
                 }
             }
 
+            // 🌙 DARK MODE SA PREKIDAČEM
             item {
-                SettingItem(stringResource(R.string.logout), highlight = true) {}
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFFF1F6FA))
+                        .border(
+                            1.dp,
+                            Color(0xFFD1E8FF),
+                            RoundedCornerShape(16.dp)
+                        )
+                        .padding(start = 20.dp, end = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Dark Mode",
+                        color = Dark,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp
+                    )
+                    Switch(
+                        checked = isDark,
+                        onCheckedChange = { isChecked ->
+                            ThemeState.isDarkTheme.value = isChecked
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedTrackColor = TopGradientEnd,
+                            uncheckedTrackColor = LightGray
+                        )
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+
+            // ❌ LOGOUT
+            item {
+                SettingItem(stringResource(R.string.logout), highlight = true) {
+                    showLogoutDialog = true
+                }
             }
         }
     }
+
+    // ===============================================
+    // ➡️ DIALOG ZA POTVRDU ODJAVE
+    // ===============================================
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text(stringResource(R.string.dialog_logout_title)) },
+            text = { Text(stringResource(R.string.dialog_logout_message)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutDialog = false
+
+                        // 1. Pozovi logiku odjave
+                        authViewModel.logout(context)
+
+                        // 2. Navigacija na auth ekran
+                        navController.navigate("authScreen") {
+                            popUpTo("homeScreen") { inclusive = true }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Text(stringResource(R.string.dialog_logout_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text(stringResource(R.string.dialog_logout_cancel))
+                }
+            }
+        )
+    }
+
+    // ===============================================
     // Dialog za izbor jezika
+    // ===============================================
     if (showLanguageDialog) {
         AlertDialog(
             onDismissRequest = { showLanguageDialog = false },
             title = { Text("Select Language") },
             text = {
                 Column {
-                    Text("English", modifier = Modifier.clickable {
-                        updateLocale(context, "en")
-                        showLanguageDialog = false
-                    })
+                    Text("English", modifier = Modifier.clickable { updateLocale(context, "en"); showLanguageDialog = false })
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Català", modifier = Modifier.clickable {
-                        updateLocale(context, "ca") // katalonski
-                        showLanguageDialog = false
-                    })
+                    Text("Català", modifier = Modifier.clickable { updateLocale(context, "ca"); showLanguageDialog = false })
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Español", modifier = Modifier.clickable {
-                        updateLocale(context, "es") // španski
-                        showLanguageDialog = false
-                    })
+                    Text("Español", modifier = Modifier.clickable { updateLocale(context, "es"); showLanguageDialog = false })
                 }
             },
             confirmButton = {
@@ -1372,4 +1689,204 @@ fun SettingItem(title: String, highlight: Boolean = false, onClick: () -> Unit =
             fontSize = 16.sp
         )
     }
+}
+
+// ===============================================
+// 🔒 SECURITY SCREEN (iz vašeg brancha)
+// ===============================================
+@Composable
+fun SecurityScreen(navController: NavController, authViewModel: AuthViewModel) {
+    val context = LocalContext.current
+    val scrollState = rememberScrollState()
+
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var showDeleteAccountDialog by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .padding(16.dp)
+            .verticalScroll(scrollState),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = stringResource(R.string.security_title),
+            fontWeight = FontWeight.Bold,
+            color = TopGradientEnd,
+            fontSize = 24.sp,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
+        // ---------------- Opcije ----------------
+        SettingItem(
+            title = stringResource(R.string.security_change_password),
+            onClick = { showChangePasswordDialog = true }
+        )
+        Spacer(Modifier.height(8.dp))
+
+        // Aktivne sesije
+        SettingItem(
+            title = stringResource(R.string.security_active_sessions),
+            onClick = { Toast.makeText(context, context.getString(R.string.security_active_sessions_placeholder), Toast.LENGTH_SHORT).show() }
+        )
+        Spacer(Modifier.height(16.dp))
+
+        Divider()
+        Spacer(Modifier.height(16.dp))
+
+        // ⚠️ Brisanje naloga
+        SettingItem(
+            title = stringResource(R.string.security_delete_account),
+            highlight = true,
+            onClick = { showDeleteAccountDialog = true }
+        )
+    }
+
+    // ===============================================
+    // DIJALOG ZA PROMENU LOZINKE
+    // ===============================================
+    if (showChangePasswordDialog) {
+        ChangePasswordDialog(
+            authViewModel = authViewModel,
+            onDismiss = { showChangePasswordDialog = false }
+        )
+    }
+
+    // ===============================================
+    // DIJALOG ZA BRISANJE NALOGA
+    // ===============================================
+    if (showDeleteAccountDialog) {
+        DeleteAccountDialog(
+            authViewModel = authViewModel,
+            navController = navController,
+            onDismiss = { showDeleteAccountDialog = false }
+        )
+    }
+}
+
+// ===============================================
+// 🔑 DIJALOG: PROMENA LOZINKE
+// ===============================================
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChangePasswordDialog(authViewModel: AuthViewModel, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    var oldPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.security_change_password)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = oldPassword,
+                    onValueChange = { oldPassword = it },
+                    label = { Text(stringResource(R.string.security_old_password)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                )
+                OutlinedTextField(
+                    value = newPassword,
+                    onValueChange = { newPassword = it },
+                    label = { Text(stringResource(R.string.security_new_password)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                )
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = { Text(stringResource(R.string.security_confirm_password)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (newPassword != confirmPassword) {
+                        Toast.makeText(context, context.getString(R.string.security_password_match_error), Toast.LENGTH_LONG).show()
+                        return@Button
+                    }
+                    if (oldPassword.isBlank() || newPassword.isBlank()) {
+                        Toast.makeText(context, context.getString(R.string.security_password_empty_error), Toast.LENGTH_LONG).show()
+                        return@Button
+                    }
+
+                    /*authViewModel.changePassword(
+                        oldPassword = oldPassword,
+                        newPassword = newPassword,
+                        onSuccess = {
+                            Toast.makeText(context, context.getString(R.string.security_password_success), Toast.LENGTH_LONG).show()
+                            onDismiss()
+                        },
+                        onError = { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                        }
+                    )*/
+                }
+            ) {
+                Text(stringResource(R.string.security_save_changes))
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss) { Text(stringResource(R.string.dialog_logout_cancel)) }
+        }
+    )
+}
+
+// ===============================================
+// 🗑️ DIJALOG: BRISANJE NALOGA
+// ===============================================
+@Composable
+fun DeleteAccountDialog(
+    authViewModel: AuthViewModel,
+    navController: NavController,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.security_delete_account_title)) },
+        text = {
+            Column {
+                Text(stringResource(R.string.security_delete_account_message))
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    stringResource(R.string.security_delete_account_warning),
+                    color = Color.Red,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    /*authViewModel.deleteAccount(
+                        context = context,
+                        onSuccess = {
+                            Toast.makeText(context, context.getString(R.string.security_delete_account_success), Toast.LENGTH_LONG).show()
+                            onDismiss()
+                            navController.navigate("authScreen") {
+                                popUpTo("homeScreen") { inclusive = true }
+                            }
+                        },
+                        onError = { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                        }
+                    )*/
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+            ) {
+                Text(stringResource(R.string.security_delete_account_confirm))
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss) { Text(stringResource(R.string.dialog_logout_cancel)) }
+        }
+    )
 }

@@ -180,6 +180,31 @@
     <string name="profile_info">Informaci\'o del perfil</string>
     <string name="security">Seguretat</string>
     <string name="dashboard">Panell</string>
-    <string name="logout">Tanca sessi\'o</string>
+    <string name="language_Change">Canvia l\'idioma</string>
+    <string name="logout">Tancar la sessió</string>
+    <string name="dialog_logout_title">Confirma Tancament de Sessió</string>
+    <string name="dialog_logout_message">Està segur que vol tancar la sessió del seu compte?</string>
+    <string name="dialog_logout_confirm">Tancar Sessió</string>
+    <string name="dialog_logout_cancel">Cancel·lar</string>
+
+    <string name="security_title">Configuració de Seguretat</string>
+    <string name="security_change_password">Canviar Contrasenya</string>
+    <string name="security_active_sessions">Sessions Actives</string>
+    <string name="security_active_sessions_placeholder">Funcionalitat disponible aviat!</string>
+    <string name="security_delete_account">Eliminar Compte</string>
+
+    <string name="security_old_password">Contrasenya Antiga</string>
+    <string name="security_new_password">Contrasenya Nova</string>
+    <string name="security_confirm_password">Confirmar Contrasenya Nova</string>
+    <string name="security_save_changes">Desar Canvis</string>
+    <string name="security_password_match_error">Les noves contrasenyes no coincideixen.</string>
+    <string name="security_password_empty_error">Tots els camps han d\'estar omplerts.</string>
+    <string name="security_password_success">Contrasenya canviada amb èxit!</string>
+
+    <string name="security_delete_account_title">Eliminar Compte</string>
+    <string name="security_delete_account_message">Eliminar el vostre compte és permanent i irreversible. Totes les vostres dades, serveis i comandes es perdran.</string>
+    <string name="security_delete_account_warning">N\'està absolutament segur?</string>
+    <string name="security_delete_account_confirm">Sí, Eliminar El Meu Compte</string>
+    <string name="security_delete_account_success">Compte eliminat amb èxit. Adéu!</string>
 
 </resources>

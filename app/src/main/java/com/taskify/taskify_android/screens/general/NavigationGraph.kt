@@ -45,6 +45,11 @@ fun NavigationGraph(navController: NavHostController) {
             ProfileInfoScreen(navController, authViewModel)
         }
 
+        // 🔒 Security Screen
+        composable("securityScreen") { // ⬅️ NOVI SCREEN
+            SecurityScreen(navController, authViewModel)
+        }
+
 
         composable("category/{categoryName}") { backStackEntry ->
             val categoryName = backStackEntry.arguments?.getString("categoryName") ?: "Unknown"

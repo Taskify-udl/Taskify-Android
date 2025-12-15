@@ -179,7 +179,31 @@
     <string name="profile_info">Profile Info</string>
     <string name="security">Security</string>
     <string name="dashboard">Dashboard</string>
+    <string name="language_Change">Change language</string>
     <string name="logout">Logout</string>
+    <string name="dialog_logout_title">Confirm Logout</string>
+    <string name="dialog_logout_message">Are you sure you want to log out of your account?</string>
+    <string name="dialog_logout_confirm">Log Out</string>
+    <string name="dialog_logout_cancel">Cancel</string>
+    <string name="security_title">Security Settings</string>
+    <string name="security_change_password">Change Password</string>
+    <string name="security_active_sessions">Active Sessions</string>
+    <string name="security_active_sessions_placeholder">Feature coming soon!</string>
+    <string name="security_delete_account">Delete Account</string>
+
+    <string name="security_old_password">Old Password</string>
+    <string name="security_new_password">New Password</string>
+    <string name="security_confirm_password">Confirm New Password</string>
+    <string name="security_save_changes">Save Changes</string>
+    <string name="security_password_match_error">New passwords do not match.</string>
+    <string name="security_password_empty_error">All fields must be filled.</string>
+    <string name="security_password_success">Password successfully changed!</string>
+
+    <string name="security_delete_account_title">Delete Account</string>
+    <string name="security_delete_account_message">Deleting your account is permanent and irreversible. All your data, services, and orders will be lost.</string>
+    <string name="security_delete_account_warning">Are you absolutely sure?</string>
+    <string name="security_delete_account_confirm">Yes, Delete My Account</string>
+    <string name="security_delete_account_success">Account successfully deleted. Goodbye!</string>
 
 
 </resources>

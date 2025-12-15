@@ -98,26 +98,6 @@ class AuthViewModel(
 
             _authState.value = AuthUiState(isSuccess = true)
 
-            /*
-            _authState.value = AuthUiState(isSuccess = true)
-            val success = repository.logout(context)
-
-
-            if (success) {
-                AuthPreferences.clearToken(context)
-
-                _currentUser.value = null
-                _profileState.value = Resource.Loading()
-
-                _authState.value = AuthUiState(isSuccess = true)
-
-                Log.d("AuthViewModel", "✅ Logout complet: token i usuari esborrats")
-            } else {
-                _authState.value = AuthUiState(
-                    isLoading = false,
-                    error = "Logout failed"
-                )
-            }*/
         }
     }
 

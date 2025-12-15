@@ -1,6 +1,5 @@
 package com.taskify.taskify_android.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -12,33 +11,35 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = PrimaryColor,
-    secondary = SecondaryColor,
-    background = TextDark,
-    surface = TextDark,
-    onPrimary = BgWhite,
-    onSecondary = BgWhite,
-    onBackground = TextGray,
-    onSurface = TextGray,
-    outline = BorderLight
+    primary = White,          // Svetla boja za glavne elemente (na tamnoj pozadini)
+    secondary = Gray,         // Sekundarna svetla boja
+    background = PrimaryDark, // Pozadina: Čista Crna
+    surface = SecondaryColor, // Površine: Tamno Siva
+    onPrimary = PrimaryDark,  // Tekst na primary: Tamno
+    onSecondary = White,      // Tekst na secondary: Svetlo
+    onBackground = White,     // Tekst na pozadini: Svetlo
+    onSurface = LightGray,    // Tekst na površinama: Svetlo Siva
+    outline = CardGray        // Linije/Borderi
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = PrimaryColor,
-    secondary = SecondaryColor,
-    background = BgWhite,
-    surface = BgSecondary,
-    onPrimary = BgWhite,
-    onSecondary = BgWhite,
-    onBackground = TextDark,
-    onSurface = TextGray,
+    primary = PrimaryColor,   // Glavna crna
+    secondary = SecondaryColor, // Tamno siva
+    background = BgWhite,     // Pozadina: Čista Bela
+    surface = BgSecondary,    // Površine: Svetlo Siva
+    onPrimary = White,        // Tekst na primary: Svetlo
+    onSecondary = White,
+    onBackground = TextDark,  // Tekst na pozadini: Tamno
+    onSurface = TextGray,     // Tekst na površinama: Siva
     outline = BorderLight
 )
 
 @Composable
 fun TaskifyAndroidTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    // ⚠️ Sada koristimo isključivo ručno stanje teme iz ThemeState
+    // Korisnik će morati ručno da podesi temu pri prvom pokretanju ako želi Dark Mode
+    darkTheme: Boolean = ThemeState.isDarkTheme.value,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

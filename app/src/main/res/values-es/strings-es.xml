@@ -180,5 +180,29 @@
     <string name="profile_info">Información del perfil</string>
     <string name="security">Seguridad</string>
     <string name="dashboard">Panel</string>
+    <string name="language_Change">Cambiar idioma</string>
     <string name="logout">Cerrar sesión</string>
+    <string name="dialog_logout_title">Confirmar Cierre de Sesión</string>
+    <string name="dialog_logout_message">¿Está seguro de que desea cerrar la sesión de su cuenta?</string>
+    <string name="dialog_logout_confirm">Cerrar Sesión</string>
+    <string name="dialog_logout_cancel">Cancelar</string>
+    <string name="security_title">Configuración de Seguridad</string>
+    <string name="security_change_password">Cambiar Contraseña</string>
+    <string name="security_active_sessions">Sesiones Activas</string>
+    <string name="security_active_sessions_placeholder">¡Funcionalidad disponible pronto!</string>
+    <string name="security_delete_account">Eliminar Cuenta</string>
+
+    <string name="security_old_password">Contraseña Antigua</string>
+    <string name="security_new_password">Contraseña Nueva</string>
+    <string name="security_confirm_password">Confirmar Contraseña Nueva</string>
+    <string name="security_save_changes">Guardar Cambios</string>
+    <string name="security_password_match_error">Las nuevas contraseñas no coinciden.</string>
+    <string name="security_password_empty_error">Todos los campos deben estar llenos.</string>
+    <string name="security_password_success">¡Contraseña cambiada con éxito!</string>
+
+    <string name="security_delete_account_title">Eliminar Cuenta</string>
+    <string name="security_delete_account_message">Eliminar su cuenta es permanente e irreversible. Todos sus datos, servicios y pedidos se perderán.</string>
+    <string name="security_delete_account_warning">¿Está absolutamente seguro?</string>
+    <string name="security_delete_account_confirm">Sí, Eliminar Mi Cuenta</string>
+    <string name="security_delete_account_success">Cuenta eliminada con éxito. ¡Adiós!</string>
 </resources>
