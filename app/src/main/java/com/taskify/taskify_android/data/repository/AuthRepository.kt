@@ -2,6 +2,7 @@ package com.taskify.taskify_android.data.repository
 
 import android.content.Context
 import android.util.Log
+import com.google.gson.Gson
 import com.taskify.taskify_android.data.models.auth.AuthPreferences
 import com.taskify.taskify_android.data.models.auth.CreateServiceRequest
 import com.taskify.taskify_android.data.models.auth.LoginRequest
@@ -12,7 +13,9 @@ import com.taskify.taskify_android.data.models.auth.UserResponse
 import com.taskify.taskify_android.data.models.entities.ProviderService
 import com.taskify.taskify_android.data.models.entities.UserDraft
 import com.taskify.taskify_android.data.network.ApiService
-import retrofit2.Response
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.time.LocalDateTime
 
 class AuthRepository(private val api: ApiService) {
@@ -140,36 +143,59 @@ class AuthRepository(private val api: ApiService) {
         }
     }
 
+    // Funció Helper per crear RequestBody per a text simple (OK per a name, description, price...)
+    private fun String.toTextRequestBody(): RequestBody {
+        // Mantenim text/plain
+        return this.toRequestBody("text/plain".toMediaTypeOrNull() ?: throw IllegalStateException("Invalid Media Type"))
+    }
+
     // ---------- CREATE SERVICE ----------
-    // Refactoritzat per retornar Resource<ProviderService>
     suspend fun createService(
         title: String,
-        category: String,
+        categoryIds: List<Int>,
         description: String,
         price: Int,
-        providerId: Long // Hem eliminat 'context' que no s'utilitzava aquí
+        providerId: Long
     ): Resource<ProviderService> {
-        // Assegurem que el format de data sigui ISO 8601 amb 'Z' al final
         val now = LocalDateTime.now().toString() + "Z"
 
-        val body = CreateServiceRequest(
-            name = title,
-            description = description,
-            provider = providerId,
-            category = category,
-            price = price,
-            createdAt = now,
-            updatedAt = now
-        )
-        Log.d("AuthRepository", "createService request body: $body")
+        // 1. Preparem la ID de la categoria com a STRING SIMPLE (sense [ ] i sense Gson)
+        // Agafem la primera (i esperem que sigui l'única) ID
+        val categoryIdString = categoryIds.firstOrNull()?.toString()
+            ?: return Resource.Error("Category ID is missing.")
+
+
+        // 2. Construïm RequestBody per a cada camp:
+        val namePart = title.toTextRequestBody()
+        val descriptionPart = description.toTextRequestBody()
+        val providerPart = providerId.toString().toTextRequestBody()
+
+        // 🚩 FIX CLAU: Enviem la ID com a String simple (e.g., "39"), no com a JSON "[39]"
+        val categoriesPart = categoryIdString.toTextRequestBody()
+
+        val pricePart = price.toString().toTextRequestBody()
+        val createdAtPart = now.toTextRequestBody()
+        val updatedAtPart = now.toTextRequestBody()
+
+        Log.d("AuthRepository", "Creating Multipart request body (categories ID as String): $categoryIdString")
 
         return try {
-            val response = api.createService(body)
-
+            // ... (la resta de la crida a api.createService)
+            val response = api.createService(
+                name = namePart,
+                description = descriptionPart,
+                provider = providerPart,
+                categories = categoriesPart,
+                price = pricePart,
+                createdAt = createdAtPart,
+                updatedAt = updatedAtPart
+            )
+            // ... (resta de la gestió d'errors)
             if (response.isSuccessful && response.body() != null) {
                 Resource.Success(response.body()!!)
             } else {
                 val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                Log.e("AuthRepository", "Error creating service: ${response.code()} - $errorBody")
                 Resource.Error("Error creating service: ${response.code()} - $errorBody")
             }
         } catch (e: Exception) {
@@ -186,6 +212,27 @@ class AuthRepository(private val api: ApiService) {
                 Resource.Success(response.body()!!)
             } else {
                 Resource.Error("Failed to load services: ${response.code()}")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    suspend fun updateService(
+        serviceId: Int,
+        updates: Map<String, Any?>
+    ): Resource<ProviderService> {
+        Log.d("AuthRepository", "updateService request: Service ID $serviceId, updates: $updates")
+
+        return try {
+            // La crida a l'API requereix l'ID i el cos de la petició
+            val response = api.updateService(serviceId, updates)
+
+            if (response.isSuccessful && response.body() != null) {
+                Resource.Success(response.body()!!)
+            } else {
+                val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                Resource.Error("Error updating service: ${response.code()} - $errorBody")
             }
         } catch (e: Exception) {
             Resource.Error("Network error: ${e.localizedMessage}")

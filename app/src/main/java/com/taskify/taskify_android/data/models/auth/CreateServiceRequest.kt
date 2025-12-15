@@ -6,7 +6,7 @@ data class CreateServiceRequest(
     val name: String,
     val description: String,
     val provider: Long,
-    val category: String,
+    val categories: List<Int>,
     val price: Int,
     @SerializedName("created_at")
     val createdAt: String,
