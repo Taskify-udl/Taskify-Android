@@ -4,24 +4,19 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.getValue // ⬅️ NOVI IMPORT
-import androidx.compose.runtime.remember // ⬅️ NOVI IMPORT
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.compose.rememberNavController
 import com.taskify.taskify_android.screens.general.NavigationGraph
 import com.taskify.taskify_android.ui.theme.TaskifyAndroidTheme
-import com.taskify.taskify_android.ui.theme.ThemeState // ⬅️ NOVI IMPORT (Za Dark Mode stanje)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val isDark by remember { ThemeState.isDarkTheme }
-
-            TaskifyAndroidTheme(darkTheme = isDark) { // ⬅️ PROSLEDJUJEMO TRENUTNO STANJE TEME
+            TaskifyAndroidTheme() { // ⬅️ PROSLEDJUJEMO TRENUTNO STANJE TEME
                 // NavigationGraph
                 val navController = rememberNavController()
                 NavigationGraph(navController = navController)

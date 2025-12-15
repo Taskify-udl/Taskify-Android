@@ -1,6 +1,7 @@
 package com.taskify.taskify_android.data.repository
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import com.google.gson.Gson
 import com.taskify.taskify_android.data.models.auth.AuthPreferences
@@ -14,8 +15,10 @@ import com.taskify.taskify_android.data.models.entities.ProviderService
 import com.taskify.taskify_android.data.models.entities.UserDraft
 import com.taskify.taskify_android.data.network.ApiService
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.InputStream
 import java.time.LocalDateTime
 
 class AuthRepository(private val api: ApiService) {
@@ -149,38 +152,68 @@ class AuthRepository(private val api: ApiService) {
         return this.toRequestBody("text/plain".toMediaTypeOrNull() ?: throw IllegalStateException("Invalid Media Type"))
     }
 
+    // 🚩 HELPER: Converteix una URI local en una Part de MultipartBody
+    private fun Context.getMultipartImagePart(uri: Uri, fieldName: String): MultipartBody.Part? {
+        val contentResolver = this.contentResolver
+
+        // Intentem obtenir el tipus MIME i el nom del fitxer
+        val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
+        val filename = "service_image_${System.currentTimeMillis()}.jpg" // Nom de fitxer genèric
+
+        return try {
+            val inputStream: InputStream? = contentResolver.openInputStream(uri)
+
+            inputStream?.use { input ->
+                val requestBody = input.readBytes().toRequestBody(mimeType.toMediaTypeOrNull())
+                // 🚨 IMPORTANT: "images" o "image"? Vam decidir "image" per a l'API anterior.
+                // Si el teu backend espera "images", canvieu fieldName a "images".
+                MultipartBody.Part.createFormData(fieldName, filename, requestBody)
+            }
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Error preparing image for upload: ${e.message}")
+            null
+        }
+    }
+
+
     // ---------- CREATE SERVICE ----------
     suspend fun createService(
         title: String,
         categoryIds: List<Int>,
         description: String,
         price: Int,
-        providerId: Long
+        providerId: Long,
+        imageUri: Uri?, // 🚩 AFEGIT
+        context: Context // 🚩 AFEGIT
     ): Resource<ProviderService> {
         val now = LocalDateTime.now().toString() + "Z"
 
-        // 1. Preparem la ID de la categoria com a STRING SIMPLE (sense [ ] i sense Gson)
-        // Agafem la primera (i esperem que sigui l'única) ID
+        // ... (Preparació de parts de text: namePart, categoriesPart, pricePart, etc.)
         val categoryIdString = categoryIds.firstOrNull()?.toString()
             ?: return Resource.Error("Category ID is missing.")
 
-
-        // 2. Construïm RequestBody per a cada camp:
         val namePart = title.toTextRequestBody()
         val descriptionPart = description.toTextRequestBody()
         val providerPart = providerId.toString().toTextRequestBody()
-
-        // 🚩 FIX CLAU: Enviem la ID com a String simple (e.g., "39"), no com a JSON "[39]"
         val categoriesPart = categoryIdString.toTextRequestBody()
-
         val pricePart = price.toString().toTextRequestBody()
         val createdAtPart = now.toTextRequestBody()
         val updatedAtPart = now.toTextRequestBody()
 
-        Log.d("AuthRepository", "Creating Multipart request body (categories ID as String): $categoryIdString")
 
+        // 2. Preparació de la Part de la Imatge
+        val imagePart: MultipartBody.Part? = if (imageUri != null && imageUri.scheme == "content") {
+            // Només intentem processar la URI si és local (content:// o file://)
+            context.getMultipartImagePart(imageUri, "image") // 🚨 Usa "image" o "images" segons el teu backend
+        } else {
+            null
+        }
+
+        Log.d("AuthRepository", "Image Part is null: ${imagePart == null}")
+
+
+        // 3. Crida a l'API
         return try {
-            // ... (la resta de la crida a api.createService)
             val response = api.createService(
                 name = namePart,
                 description = descriptionPart,
@@ -188,7 +221,8 @@ class AuthRepository(private val api: ApiService) {
                 categories = categoriesPart,
                 price = pricePart,
                 createdAt = createdAtPart,
-                updatedAt = updatedAtPart
+                updatedAt = updatedAtPart,
+                image = imagePart // 🚩 Passem la Part de la imatge (pot ser nul·la)
             )
             // ... (resta de la gestió d'errors)
             if (response.isSuccessful && response.body() != null) {

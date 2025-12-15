@@ -2,6 +2,8 @@ package com.taskify.taskify_android.data.models.entities
 
 import com.google.gson.annotations.SerializedName
 
+const val API_BASE_URL = "http://10.0.2.2:8000"
+
 data class ProviderService(
     val id: Int,
     @SerializedName("provider")

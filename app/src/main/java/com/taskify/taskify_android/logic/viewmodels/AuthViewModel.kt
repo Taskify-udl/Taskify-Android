@@ -1,6 +1,7 @@
 package com.taskify.taskify_android.logic.viewmodels
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -44,7 +45,8 @@ class AuthViewModel(
     private val _profileState = MutableStateFlow<Resource<User>>(Resource.Loading())
     val profileState: StateFlow<Resource<User>> = _profileState
 
-    private val _serviceListState = MutableStateFlow<Resource<List<ProviderService>>>(Resource.Loading())
+    private val _serviceListState =
+        MutableStateFlow<Resource<List<ProviderService>>>(Resource.Loading())
     val serviceListState: StateFlow<Resource<List<ProviderService>>> = _serviceListState
 
     // ---------- LOGIN ----------
@@ -227,6 +229,8 @@ class AuthViewModel(
         category: ServiceType,
         description: String,
         price: Int,
+        imageUri: Uri?,
+        context: Context,
         onSuccess: (ProviderService) -> Unit,
         onError: (String) -> Unit
     ) {
@@ -249,33 +253,39 @@ class AuthViewModel(
             }
 
             // Cridem al repositori amb el nom de l'enum com a categoria (String)
-            when (val result = repository.createService(
-                title = title,
-                categoryIds = listOf(categoryId),
-                description = description,
-                price = price,
-                providerId = providerId
-            )) {
-                is Resource.Success -> {
-                    val service = result.data
+            viewModelScope.launch {
+                when (val result = repository.createService(
+                    title = title,
+                    categoryIds = listOf(categoryId),
+                    description = description,
+                    price = price,
+                    providerId = providerId,
+                    imageUri = imageUri, // 🚩 PASSANT URI
+                    context = context // 🚩 PASSANT CONTEXT
+                )) {
+                    is Resource.Success -> {
+                        val service = result.data
 
-                    // 🎯 1. Actualitzar la llista local de serveis
-                    val updatedServices = current.services + service
+                        // 🎯 1. Actualitzar la llista local de serveis
+                        val updatedServices = current.services + service
 
-                    // 🎯 2. Actualitzar el provider local
-                    val updatedProvider = current.copy(services = updatedServices)
+                        // 🎯 2. Actualitzar el provider local
+                        val updatedProvider = current.copy(services = updatedServices)
 
-                    _currentUser.value = updatedProvider
-                    _profileState.value = Resource.Success(updatedProvider)
+                        _currentUser.value = updatedProvider
+                        _profileState.value = Resource.Success(updatedProvider)
 
-                    // 🎯 3. Retornar el servei creat
-                    onSuccess(service)
-                }
-                is Resource.Error -> {
-                    onError(result.message)
-                }
-                is Resource.Loading -> {
-                    // Es podria afegir gestió de loading si es vol
+                        // 🎯 3. Retornar el servei creat
+                        onSuccess(service)
+                    }
+
+                    is Resource.Error -> {
+                        onError(result.message)
+                    }
+
+                    is Resource.Loading -> {
+                        // Es podria afegir gestió de loading si es vol
+                    }
                 }
             }
         }
@@ -304,10 +314,13 @@ class AuthViewModel(
 
                     _serviceListState.value = Resource.Success(filteredServices)
                 }
+
                 is Resource.Error -> {
                     _serviceListState.value = Resource.Error(result.message)
                 }
-                is Resource.Loading -> { /* Handled above */ }
+
+                is Resource.Loading -> { /* Handled above */
+                }
             }
         }
     }
@@ -320,10 +333,13 @@ class AuthViewModel(
                 is Resource.Success -> {
                     _serviceListState.value = Resource.Success(result.data)
                 }
+
                 is Resource.Error -> {
                     _serviceListState.value = Resource.Error(result.message)
                 }
-                is Resource.Loading -> { /* Handled above */ }
+
+                is Resource.Loading -> { /* Handled above */
+                }
             }
         }
     }
@@ -334,6 +350,7 @@ class AuthViewModel(
         newCategory: ServiceType,
         newDescription: String,
         newPrice: Int,
+        newImageUri: Uri?, // 🚩 AFEGIT
         onSuccess: (ProviderService) -> Unit,
         onError: (String) -> Unit
     ) {
@@ -378,15 +395,18 @@ class AuthViewModel(
 
                     onSuccess(updatedServiceFromApi)
                 }
+
                 is Resource.Error -> {
                     onError(result.message)
                 }
+
                 is Resource.Loading -> {
                     // Es podria afegir gestió de loading
                 }
             }
         }
     }
+
     fun resetState() {
         _authState.value = AuthUiState()
     }

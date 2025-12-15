@@ -2,9 +2,13 @@ package com.taskify.taskify_android.screens.general
 
 import android.content.Context
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Build
+import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -53,6 +57,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
@@ -66,6 +71,8 @@ import com.taskify.taskify_android.data.models.entities.User
 import com.taskify.taskify_android.ui.theme.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import coil.compose.rememberAsyncImagePainter
+import com.taskify.taskify_android.data.models.entities.API_BASE_URL
 import com.taskify.taskify_android.data.models.entities.ServiceTypeLookup
 import com.taskify.taskify_android.data.repository.Resource
 import java.util.Locale
@@ -225,11 +232,16 @@ fun BottomNavigationBar(selectedTab: Int, onTabSelected: (Int) -> Unit) {
 }
 
 @Composable
-fun ServiceOfferCard(
-    service: ProviderService,
-    onContractClick: () -> Unit,
-    onClick: () -> Unit
-) {
+fun ServiceOfferCard(service: ProviderService, onContractClick: () -> Unit, onClick: () -> Unit) {
+    // 1. Lògica per obtenir la URL ABSOLUTA
+    val imageUrl = service.images
+        ?.firstOrNull()
+        ?.image
+        ?.let { relativePath ->
+            // Si la ruta és relativa (/media/services/...), construïm la URL absoluta
+            if (relativePath.startsWith("/")) API_BASE_URL + relativePath else relativePath
+        }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -238,14 +250,20 @@ fun ServiceOfferCard(
             .clip(RoundedCornerShape(16.dp))
             .clickable { onClick() }
     ) {
-        // Slika servisa
+        // 🖼️ GESTIÓ DE LA IMATGE
+        val painter = rememberAsyncImagePainter(
+            model = imageUrl, // URL absoluta del servei (o null)
+            error = painterResource(id = R.drawable.worker1) // Imatge per defecte (worker1)
+        )
+
         Image(
-            painter = painterResource(id = R.drawable.worker1),
+            painter = painter,
             contentDescription = service.name,
-            contentScale = ContentScale.Crop,
+            contentScale = ContentScale.Crop, // Assegura que la imatge ompli l'àrea
             modifier = Modifier.matchParentSize()
         )
-        // Gradient overlay i tekst
+
+        // Gradient overlay i text
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -267,7 +285,7 @@ fun ServiceOfferCard(
                 fontSize = 18.sp
             )
             Text(
-                text = "€${service.price} / ${service.category?.name?.replace("_", " ") ?: "N/A"}",
+                text = "€${service.price} / ${service.categoryNames?.firstOrNull() ?: "N/A"}",
                 color = Color.White.copy(alpha = 0.8f),
                 fontSize = 14.sp
             )
@@ -482,6 +500,7 @@ fun OffersScreen(
 
             is Resource.Success -> {
                 val services = (allServicesState as Resource.Success).data
+
 
                 val filteredServices = services.filter { service ->
                     searchQuery.isBlank() ||
@@ -1057,7 +1076,7 @@ fun CreateServiceScreen(
     authViewModel: AuthViewModel,
     navController: NavController
 ) {
-    // Ako korisnik još nije učitan
+    // si encara no ha arribat l'usuari
     if (user == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
@@ -1065,10 +1084,10 @@ fun CreateServiceScreen(
         return
     }
 
-    // Provera da li je korisnik provider
+    // Rol del user
     val isProvider = user is Provider || user.role.toString() == "PROVIDER"
     if (!isProvider) {
-        // ❌ CUSTOMER → Postani provider
+        // ❌ CUSTOMER → Missatge "Become a provider"
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
@@ -1098,28 +1117,219 @@ fun CreateServiceScreen(
             }
         }
     } else {
-        // ✅ PROVIDER → Ekran za upravljanje servisima
+        // ✅ PROVIDER → Pantalla per gestionar serveis
         ProviderServiceScreen(
             authViewModel = authViewModel
         )
     }
 }
 
+// ====================================================================
+// NOU COMPONENT: GESTIÓ I PREVISUALITZACIÓ DE LA IMATGE
+// ====================================================================
+
+@Composable
+fun ServiceImageContainer(
+    imageUri: Uri?,
+    modifier: Modifier = Modifier,
+    onImageSelected: (Uri) -> Unit
+) {
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri: Uri? ->
+            uri?.let { onImageSelected(it) }
+        }
+    )
+
+    Box(
+        modifier = modifier
+            .size(150.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0xFFE0E0E0))
+            .clickable { launcher.launch("image/*") }
+            .border(2.dp, TopGradientEnd.copy(alpha = 0.7f), RoundedCornerShape(8.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        if (imageUri == null) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    Icons.Default.AddAPhoto,
+                    contentDescription = "Add Photo",
+                    tint = Dark.copy(alpha = 0.5f),
+                    modifier = Modifier.size(40.dp)
+                )
+                Spacer(Modifier.height(4.dp))
+                Text("Add Photo", color = Dark.copy(alpha = 0.5f), fontSize = 12.sp)
+            }
+        } else {
+            // 🚩 FIX: Utilitzem Coil directament tant per a URI locals com per a URL remotes.
+            // Coil gestiona la conversió de content:// Uri a Bitmap de manera segura i asíncrona.
+
+            // Nota: Aquí s'assumeix que imageUri conté la URI/URL que es vol carregar.
+            // Si la Uri ve de l'API (URL), és una String. Si ve del selector, és una Uri. Coil les maneja totes dues.
+            val modelToLoad: Any = imageUri
+
+            // Si la URI és una URL remota, s'haurà resolt prèviament al ServiceDialog.
+
+            val painter = rememberAsyncImagePainter(
+                model = modelToLoad,
+                // Utilitzem l'error com a placeholder final si la càrrega falla
+                error = painterResource(id = R.drawable.worker1)
+            )
+
+            Image(
+                painter = painter,
+                contentDescription = "Service Image",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.matchParentSize()
+            )
+        }
+    }
+}
+
+// ====================================================================
+// SERVICE DIALOG (AFEGIT GESTIÓ DE URI)
+// ====================================================================
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ServiceDialog(
+    initial: ProviderService? = null,
+    onDismiss: () -> Unit,
+    // 🚩 SIGNATURA ACTUALITZADA PER INCLOURE URI
+    onCreate: (title: String, category: ServiceType, description: String, price: Int, imageUri: Uri?) -> Unit,
+    onEdit: (service: ProviderService, title: String, category: ServiceType, description: String, price: Int, imageUri: Uri?) -> Unit
+) {
+    val context = LocalContext.current
+    val isEditMode = initial != null
+
+    var title by remember { mutableStateOf(initial?.name ?: "") }
+    var description by remember { mutableStateOf(initial?.description ?: "") }
+    var price by remember { mutableStateOf(initial?.price?.toString() ?: "") }
+    var selectedCategory by remember {
+        mutableStateOf(
+            initial?.categoryNames?.firstOrNull()?.let { categoryName ->
+                ServiceTypeLookup.nameToEnum(categoryName)
+            } ?: ServiceType.OTHER
+        )
+    }
+
+    // 🚩 ESTAT PER A LA URI (amb URL absoluta si existeix inicialment)
+    var imageUri by remember {
+        mutableStateOf<Uri?>(
+            initial?.images?.firstOrNull()?.image?.let { relativePath ->
+                val fullUrl = if (relativePath.startsWith("/")) API_BASE_URL + relativePath else relativePath
+                Uri.parse(fullUrl)
+            }
+        )
+    }
+
+    // Configuració de colors per als OutlinedTextFields
+    val textFieldColors = taskifyOutlinedTextFieldColors()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(if (isEditMode) "Edit Service" else "Create New Service", color = TopGradientEnd)
+        },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
+                // 🖼️ GESTIÓ DE LA IMATGE
+                ServiceImageContainer(
+                    imageUri = imageUri,
+                    onImageSelected = { newUri -> imageUri = newUri }
+                )
+                Spacer(Modifier.height(16.dp))
+
+                // ... (Camps de Text, Categoria, Preu)
+                OutlinedTextField(
+                    value = title, onValueChange = { title = it },
+                    label = { Text("Title (Required)") }, singleLine = true, modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = description, onValueChange = { description = it },
+                    label = { Text("Description") }, maxLines = 3, modifier = Modifier.fillMaxWidth()
+                )
+                // ---------------- ExposedDropdownMenuBox ----------------
+                var expanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+                    OutlinedTextField(
+                        value = selectedCategory.name.replace("_", " ").lowercase(Locale.getDefault()).capitalize(),
+                        onValueChange = {}, readOnly = true, label = { Text("Category") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        ServiceType.entries.forEach { type ->
+                            DropdownMenuItem(text = { Text(type.name.replace("_", " ").lowercase(Locale.getDefault()).capitalize()) },
+                                onClick = { selectedCategory = type; expanded = false })
+                        }
+                    }
+                }
+
+                OutlinedTextField(
+                    value = price, onValueChange = { input -> if (input.all { it.isDigit() }) { price = input } },
+                    label = { Text("Price (€)") }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val p: Int = price.toIntOrNull() ?: 0
+                    if (title.isBlank() || price.isBlank()) {
+                        Toast.makeText(context, "Please fill in title and price.", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    if (isEditMode && initial != null) {
+                        // 🚩 NOVA CRIDA PER EDITAR AMB URI
+                        onEdit(initial, title, selectedCategory, description, p, imageUri)
+                    } else {
+                        // 🚩 NOVA CRIDA PER CREAR AMB URI
+                        onCreate(title, selectedCategory, description, p, imageUri)
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = TopGradientEnd)
+            ) {
+                Text(if (isEditMode) "Save Changes" else "Create Service", color = Color.White)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel", color = TopGradientEnd) }
+        },
+        shape = RoundedCornerShape(16.dp),
+        containerColor = Color.White
+    )
+}
+
+
+// ====================================================================
+// PROVIDER SERVICE SCREEN (INCLOU LA VISUALITZACIÓ DELS SERVEIS DE L'USUARI)
+// ====================================================================
+
 @Composable
 fun ProviderServiceScreen(authViewModel: AuthViewModel) {
     val context = LocalContext.current
     val user by authViewModel.currentUser.collectAsState()
     val serviceListState by authViewModel.serviceListState.collectAsState()
+    // Si l'usuari no és Provider o és nul, sortim.
     val provider = user as? Provider ?: return
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var serviceToEdit by remember { mutableStateOf<ProviderService?>(null) }
 
-    // Učitavanje servisa
+    // 1. CÀRREGA INICIAL
     LaunchedEffect(Unit) {
+        // Assegurem que la llista de serveis del provider es carregui
         authViewModel.loadProviderServices()
     }
 
+    // Obtenim els serveis directament de l'objecte Provider de l'estat local
     val services = provider.services
 
     Column(
@@ -1147,7 +1357,7 @@ fun ProviderServiceScreen(authViewModel: AuthViewModel) {
 
         Spacer(Modifier.height(22.dp))
 
-        // Stanja učitavanja
+        // 2. GESTIÓ D'ESTATS DE CÀRREGA I MOSTRAR LA LLISTA
         when (serviceListState) {
             is Resource.Loading -> {
                 Box(Modifier.fillMaxSize(), Alignment.Center) {
@@ -1166,6 +1376,7 @@ fun ProviderServiceScreen(authViewModel: AuthViewModel) {
             }
 
             is Resource.Success -> {
+                // 🚩 FIX: Mostrem la llista de serveis obtinguda del Provider local
                 if (services.isEmpty()) {
                     Box(
                         Modifier.fillMaxSize(),
@@ -1187,47 +1398,52 @@ fun ProviderServiceScreen(authViewModel: AuthViewModel) {
         }
     }
 
-    // ============= POPUP ZA KREIRANJE =============
+    // ============= POPUP CREAR (La lògica per passar la Uri i el Context) =============
     if (showCreateDialog) {
         ServiceDialog(
             onDismiss = { showCreateDialog = false },
-            onCreate = { title, category, desc, price ->
+            onCreate = { title, category, desc, price, imageUri ->
                 authViewModel.createService(
                     title = title,
                     category = category,
                     description = desc,
                     price = price,
+                    imageUri = imageUri,
+                    context = context, // PASSANT CONTEXT
                     onSuccess = {
                         Toast.makeText(context, "Service created!", Toast.LENGTH_SHORT).show()
                         showCreateDialog = false
+                        authViewModel.loadProviderServices() // Refresquem la llista
                     },
                     onError = {
                         Toast.makeText(context, it, Toast.LENGTH_LONG).show()
                     }
                 )
             },
-            onEdit = { _, _, _, _, _ -> }
+            onEdit = { _, _, _, _, _, _ -> }
         )
     }
 
-    // ============= POPUP ZA IZMENU =============
+    // ============= POPUP EDITAR (La lògica per passar la Uri) =============
     if (serviceToEdit != null) {
         val editService = serviceToEdit!!
 
         ServiceDialog(
             initial = editService,
             onDismiss = { serviceToEdit = null },
-            onCreate = { _, _, _, _ -> },
-            onEdit = { serv, title, category, desc, price ->
+            onCreate = { _, _, _, _, _ -> },
+            onEdit = { serv, title, category, desc, price, imageUri ->
                 authViewModel.updateService(
                     serviceToUpdate = serv,
                     newTitle = title,
                     newCategory = category,
                     newDescription = desc,
                     newPrice = price,
+                    newImageUri = imageUri, // PASSANT LA NOVA URI
                     onSuccess = {
                         Toast.makeText(context, "Service updated!", Toast.LENGTH_SHORT).show()
                         serviceToEdit = null
+                        authViewModel.loadProviderServices() // Refresquem la llista
                     },
                     onError = { error ->
                         Toast.makeText(context, error, Toast.LENGTH_LONG).show()
@@ -1237,7 +1453,6 @@ fun ProviderServiceScreen(authViewModel: AuthViewModel) {
         )
     }
 }
-
 @Composable
 fun ServiceCard(
     service: ProviderService,
@@ -1345,138 +1560,6 @@ fun ServiceCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ServiceDialog(
-    initial: ProviderService? = null,
-    onDismiss: () -> Unit,
-    onCreate: (String, ServiceType, String, Int) -> Unit,
-    onEdit: (ProviderService, String, ServiceType, String, Int) -> Unit
-) {
-    var title by remember { mutableStateOf(initial?.name ?: "") }
-    var description by remember { mutableStateOf(initial?.description ?: "") }
-    var price by remember { mutableStateOf(initial?.price?.toString() ?: "") }
-    var selectedCategory by remember {
-        mutableStateOf(
-            initial?.categoryNames?.firstOrNull()?.let { categoryName ->
-                ServiceTypeLookup.nameToEnum(categoryName)
-            } ?: ServiceType.OTHER
-        )
-    }
-
-    // Configuració de colors per als OutlinedTextFields
-    val textFieldColors = taskifyOutlinedTextFieldColors()
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = if (initial == null) "Create New Service" else "Edit Service",
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
-                color = TopGradientEnd
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Title (Required)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = textFieldColors
-                )
-
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Description") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = textFieldColors,
-                    maxLines = 3
-                )
-
-                // ---------------- ExposedDropdownMenuBox ----------------
-                var expanded by remember { mutableStateOf(false) }
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
-                ) {
-                    OutlinedTextField(
-                        value = selectedCategory.name.replace("_", " ")
-                            .lowercase(Locale.getDefault()).capitalize(),
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Category") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth(),
-                        colors = textFieldColors
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        ServiceType.entries.forEach { type ->
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        type.name.replace("_", " ").lowercase(Locale.getDefault())
-                                            .capitalize()
-                                    )
-                                },
-                                onClick = {
-                                    selectedCategory = type
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-
-                OutlinedTextField(
-                    value = price,
-                    onValueChange = { input ->
-                        if (input.all { it.isDigit() }) {
-                            price = input
-                        }
-                    },
-                    label = { Text("Price (€)") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = textFieldColors
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val p: Int = price.toIntOrNull() ?: 0
-                    if (initial == null) onCreate(title, selectedCategory, description, p)
-                    else onEdit(initial, title, selectedCategory, description, p)
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = TopGradientEnd)
-            ) {
-                Text(if (initial == null) "Create" else "Save Changes", color = Color.White)
-            }
-        },
-        dismissButton = {
-            OutlinedButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = TopGradientEnd),
-                border = BorderStroke(1.dp, TopGradientEnd)
-            ) {
-                Text("Cancel")
-            }
-        },
-        shape = RoundedCornerShape(16.dp)
-    )
-}
-
 // Settings Screen
 @Composable
 fun SettingsScreen(navController: NavController, authViewModel: AuthViewModel) {
@@ -1485,8 +1568,6 @@ fun SettingsScreen(navController: NavController, authViewModel: AuthViewModel) {
     var showLogoutDialog by remember { mutableStateOf(false) }
 
     // 🌙 TEME: Čita se iz ThemeState singletona
-    val isDark by remember { ThemeState.isDarkTheme }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1566,16 +1647,6 @@ fun SettingsScreen(navController: NavController, authViewModel: AuthViewModel) {
                         color = Dark,
                         fontWeight = FontWeight.Medium,
                         fontSize = 16.sp
-                    )
-                    Switch(
-                        checked = isDark,
-                        onCheckedChange = { isChecked ->
-                            ThemeState.isDarkTheme.value = isChecked
-                        },
-                        colors = SwitchDefaults.colors(
-                            checkedTrackColor = TopGradientEnd,
-                            uncheckedTrackColor = LightGray
-                        )
                     )
                 }
                 Spacer(Modifier.height(8.dp))

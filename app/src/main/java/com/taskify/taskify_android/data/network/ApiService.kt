@@ -8,6 +8,7 @@ import com.taskify.taskify_android.data.models.auth.RegisterRequest
 import com.taskify.taskify_android.data.models.auth.RegisterResponse
 import com.taskify.taskify_android.data.models.auth.UserResponse
 import com.taskify.taskify_android.data.models.entities.ProviderService
+import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -41,7 +42,8 @@ interface ApiService {
         @Part("categories") categories: RequestBody,
         @Part("price") price: RequestBody,
         @Part("created_at") createdAt: RequestBody,
-        @Part("updated_at") updatedAt: RequestBody
+        @Part("updated_at") updatedAt: RequestBody,
+        @Part image: MultipartBody.Part? = null
     ): Response<ProviderService>
 
     @GET("api/service")
