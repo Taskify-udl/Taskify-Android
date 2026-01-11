@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
+import com.taskify.taskify_android.logic.viewmodels.ChatViewModel
 import com.taskify.taskify_android.ui.theme.*
 import com.taskify.taskify_android.screens.general.homescreen.CreateServiceScreen
 import com.taskify.taskify_android.screens.general.homescreen.FavoritesScreen
@@ -41,7 +42,7 @@ import com.taskify.taskify_android.screens.general.homescreen.SettingsScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
+fun HomeScreen(navController: NavController, authViewModel: AuthViewModel, chatViewModel: ChatViewModel) {
     val user by authViewModel.currentUser.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
     var searchQuery by remember { mutableStateOf("") }
@@ -116,7 +117,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
                         }
                     },
                     actions = {
-                        IconButton(onClick = { /* TODO: Chat */ }) {
+                        IconButton(onClick = { navController.navigate("inbox") }) {
                             Icon(
                                 imageVector = Icons.Default.Chat,
                                 contentDescription = context.getString(R.string.chat),
@@ -150,7 +151,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
 
                     1 -> FavoritesScreen(navController)
                     2 -> CreateServiceScreen(user, authViewModel, navController)
-                    3 -> OrdersScreen(authViewModel = authViewModel)
+                    3 -> OrdersScreen(authViewModel = authViewModel, chatViewModel = chatViewModel, navController = navController)
                     4 -> SettingsScreen(
                         navController = navController,
                         authViewModel = authViewModel

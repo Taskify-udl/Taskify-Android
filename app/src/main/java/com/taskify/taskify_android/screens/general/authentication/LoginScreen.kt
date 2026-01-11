@@ -1,4 +1,4 @@
-package com.taskify.taskify_android.screens.general
+package com.taskify.taskify_android.screens.general.authentication
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.core.LinearEasing
