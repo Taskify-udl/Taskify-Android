@@ -52,6 +52,10 @@ fun NavigationGraph(navController: NavHostController) {
             SecurityScreen(navController, authViewModel)
         }
 
+        //Dashboard Screen
+        composable("dashboardScreen") {
+            DashboardScreen(navController, authViewModel)
+        }
 
         composable("category/{categoryName}") { backStackEntry ->
             val categoryName = backStackEntry.arguments?.getString("categoryName") ?: "Unknown"

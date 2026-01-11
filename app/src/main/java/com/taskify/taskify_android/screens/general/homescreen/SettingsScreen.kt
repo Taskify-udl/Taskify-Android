@@ -112,7 +112,11 @@ fun SettingsScreen(navController: NavController, authViewModel: AuthViewModel) {
             }
 
             // 📊 Dashboard
-            item { SettingItem(stringResource(R.string.dashboard)) {} }
+            item {
+                SettingItem(stringResource(R.string.dashboard)) {
+                    navController.navigate("dashboardScreen")
+                }
+            }
 
             // 🌐 Promjena jezika
             item {
