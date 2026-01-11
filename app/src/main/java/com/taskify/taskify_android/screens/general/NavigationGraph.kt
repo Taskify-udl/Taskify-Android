@@ -23,7 +23,7 @@ fun NavigationGraph(navController: NavHostController) {
     NavHost(navController = navController, startDestination = "initScreen") {
         //  Init screen with animated app name
         composable("initScreen") {
-            InitScreen(navController = navController)
+            InitScreen(navController = navController, authViewModel)
         }
 
         // Authentication screen where user can choose to Login or Register

@@ -5,11 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
@@ -44,21 +44,23 @@ fun ChatDetailScreen(
     val currentUser by authViewModel.currentUser.collectAsState()
     var textState by remember { mutableStateOf("") }
 
+    // 🆕 1. Creem l'estat de la llista per controlar el scroll
+    val listState = rememberLazyListState()
+
     LaunchedEffect(conversationId) {
         chatViewModel.fetchMessages(conversationId)
     }
 
-    // Obtenim l'objecte complet de l'altre participant per a la capçalera
+    // --- Lògica d'interfície (DisplayName, Background, etc.) ---
     val otherUser = remember(conversationsState) {
         (conversationsState as? Resource.Success)?.data?.find { it.id == conversationId }?.participants
     }
-
     val displayName = remember(otherUser) {
         val full = "${otherUser?.firstName ?: ""} ${otherUser?.lastName ?: ""}".trim()
         full.ifEmpty { "User" }
     }
 
-    // --- Background Animation (Mateixa lògica) ---
+    // Background animation...
     val infiniteTransition = rememberInfiniteTransition(label = "chatBgAnim")
     val progress by infiniteTransition.animateFloat(
         initialValue = 0f, targetValue = 1f,
@@ -116,7 +118,6 @@ fun ChatDetailScreen(
                 }
             },
             bottomBar = {
-                // Caixa d'enviament més realista
                 Surface(color = Color.White, shadowElevation = 12.dp) {
                     Row(
                         modifier = Modifier
@@ -137,9 +138,7 @@ fun ChatDetailScreen(
                                 focusedBorderColor = BrandBlue,
                                 unfocusedBorderColor = Color.LightGray,
                                 focusedContainerColor = Color(0xFFF7F8FA),
-                                unfocusedContainerColor = Color(0xFFF7F8FA),
-                                focusedTextColor = Dark,
-                                unfocusedTextColor = Dark
+                                unfocusedContainerColor = Color(0xFFF7F8FA)
                             )
                         )
                         Spacer(Modifier.width(8.dp))
@@ -148,13 +147,12 @@ fun ChatDetailScreen(
                                 if (textState.isNotBlank()) {
                                     chatViewModel.sendMessage(conversationId, textState)
                                     textState = ""
+                                    // El scroll es dispararà automàticament gràcies al LaunchedEffect de baix
                                 }
                             },
-                            modifier = Modifier
-                                .size(48.dp)
-                                .background(BrandBlue, CircleShape)
+                            modifier = Modifier.size(48.dp).background(BrandBlue, CircleShape)
                         ) {
-                            Icon(Icons.Default.Send, contentDescription = "Send", tint = Color.White, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.Send, contentDescription = "Send", tint = Color.White)
                         }
                     }
                 }
@@ -165,10 +163,20 @@ fun ChatDetailScreen(
                     is Resource.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center), color = BrandBlue)
                     is Resource.Success -> {
                         val messageList = state.data ?: emptyList()
+
+                        // 🆕 2. Efecte automàtic: Quan la mida de la llista canvia, fem scroll al final
+                        LaunchedEffect(messageList.size) {
+                            if (messageList.isNotEmpty()) {
+                                listState.animateScrollToItem(messageList.size - 1)
+                            }
+                        }
+
                         if (messageList.isEmpty()) {
                             EmptyChatPlaceholder()
                         } else {
                             LazyColumn(
+                                // 🆕 3. Vinculem l'estat del scroll a la LazyColumn
+                                state = listState,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(16.dp),
                                 verticalArrangement = Arrangement.spacedBy(12.dp)

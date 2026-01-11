@@ -36,10 +36,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.IntSize
+import com.taskify.taskify_android.logic.viewmodels.AuthViewModel
 import com.taskify.taskify_android.ui.theme.BgSecondary
 import com.taskify.taskify_android.ui.theme.BgWhite
 import com.taskify.taskify_android.ui.theme.BorderLight
@@ -49,8 +51,8 @@ import com.taskify.taskify_android.ui.theme.TextGray
 
 
 @Composable
-fun InitScreen(navController: NavHostController) {
-
+fun InitScreen(navController: NavHostController, authViewModel: AuthViewModel) {
+    val context = LocalContext.current
     var stage by remember { mutableIntStateOf(0) }
     var sizePx by remember { mutableStateOf(IntSize(0, 0)) }
 
@@ -89,7 +91,7 @@ fun InitScreen(navController: NavHostController) {
         label = "scaleLogo"
     )
 
-    // Seqüència
+    // Dins de InitScreen.kt -> LaunchedEffect
     LaunchedEffect(Unit) {
         stage = 0
         delay(2600)
@@ -97,10 +99,21 @@ fun InitScreen(navController: NavHostController) {
         delay(700)
         stage = 1
         delay(2800)
-        navController.navigate("authScreen") {
-            popUpTo("initScreen") { inclusive = true }
-            launchSingleTop = true
-        }
+
+        // Comprovem la sessió abans de navegar
+        authViewModel.checkAndLoadSession(
+            context = context,
+            onSuccess = {
+                navController.navigate("homeScreen") {
+                    popUpTo("initScreen") { inclusive = true }
+                }
+            },
+            onError = {
+                navController.navigate("authScreen") {
+                    popUpTo("initScreen") { inclusive = true }
+                }
+            }
+        )
     }
 
     Box(

@@ -57,6 +57,8 @@ dependencies {
     implementation(libs.androidx.foundation)
     implementation(libs.androidx.compose.animation.core)
     implementation(libs.androidx.runtime)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.foundation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -67,9 +69,11 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
     // Add for LocalDate/LocalTime support
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
-// Material 3 date/time pickers (ako već nemate)
+    // Material 3 date/time pickers (ako već nemate)
     implementation("androidx.compose.material3:material3:1.1.1")
     implementation("androidx.compose.material3:material3-window-size-class:1.1.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+
     // Navigation
     implementation(libs.androidx.navigation.compose)
 

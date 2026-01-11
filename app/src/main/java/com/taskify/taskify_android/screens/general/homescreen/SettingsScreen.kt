@@ -174,12 +174,13 @@ fun SettingsScreen(navController: NavController, authViewModel: AuthViewModel) {
                     onClick = {
                         showLogoutDialog = false
 
-                        // 1. Pozovi logiku odjave
+                        // 1. Executem el logout
                         authViewModel.logout(context)
 
-                        // 2. Navigacija na auth ekran
+                        // 2. Naveguem a la pantalla d'autenticació (AuthScreen)
                         navController.navigate("authScreen") {
-                            popUpTo("homeScreen") { inclusive = true }
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red)

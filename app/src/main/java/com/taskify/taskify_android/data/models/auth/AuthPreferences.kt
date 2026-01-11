@@ -25,6 +25,8 @@ object AuthPreferences {
         }
     }
 
+    fun getToken(context: Context): String? = getTokenBlocking(context)
+
     fun getTokenBlocking(context: Context): String? = runBlocking {
         val prefs = context.dataStore.data.first()
         prefs[TOKEN_KEY]

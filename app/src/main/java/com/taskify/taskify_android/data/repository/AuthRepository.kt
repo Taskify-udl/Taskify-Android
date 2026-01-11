@@ -29,6 +29,9 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.InputStream
 import java.time.LocalDateTime
+import androidx.lifecycle.viewModelScope
+import com.taskify.taskify_android.logic.viewmodels.AuthUiState
+import kotlinx.coroutines.launch
 
 class AuthRepository(private val api: ApiService) {
     // ---------- LOGIN ----------
@@ -60,6 +63,7 @@ class AuthRepository(private val api: ApiService) {
     }
 
     // ---------- LOGOUT ----------
+
     suspend fun logout(context: Context): Boolean {
         val token = AuthPreferences.getTokenBlocking(context)
         if (token.isNullOrEmpty()) return false
