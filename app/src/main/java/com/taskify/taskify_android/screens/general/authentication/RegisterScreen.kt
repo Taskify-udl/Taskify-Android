@@ -1,14 +1,12 @@
-package com.taskify.taskify_android.screens.general
+package com.taskify.taskify_android.screens.general.authentication
 
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -18,13 +16,11 @@ import androidx.compose.material3.*
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import com.taskify.taskify_android.R
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -39,8 +35,6 @@ import com.taskify.taskify_android.logic.validateCompanyInfo
 import com.taskify.taskify_android.logic.validateRegister
 import com.taskify.taskify_android.logic.viewmodels.AuthViewModel
 import com.taskify.taskify_android.ui.theme.*
-import kotlinx.coroutines.delay
-import androidx.compose.material3.TextField
 import androidx.compose.ui.text.TextStyle
 
 

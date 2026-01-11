@@ -14,6 +14,11 @@ import com.taskify.taskify_android.data.models.auth.RegisterResponse
 import com.taskify.taskify_android.data.models.auth.UpdateContractStatusRequest
 import com.taskify.taskify_android.data.models.auth.UserResponse
 import com.taskify.taskify_android.data.models.auth.VerifyCodeRequest
+import com.taskify.taskify_android.data.models.chat.ConversationResponse
+import com.taskify.taskify_android.data.models.chat.CreateConversationRequest
+import com.taskify.taskify_android.data.models.chat.MessagePaginationResponse
+import com.taskify.taskify_android.data.models.chat.MessageResponse
+import com.taskify.taskify_android.data.models.chat.SendMessageRequest
 import com.taskify.taskify_android.data.models.entities.ContractStatus
 import com.taskify.taskify_android.data.models.entities.ProviderService
 import com.taskify.taskify_android.data.models.entities.UserDraft
@@ -383,7 +388,10 @@ class AuthRepository(private val api: ApiService) {
                 status = newStatus
             )
 
-            Log.d("AuthRepository", "Fent PATCH a ID: ${contract.id} per canviar a ${newStatus.apiValue}")
+            Log.d(
+                "AuthRepository",
+                "Fent PATCH a ID: ${contract.id} per canviar a ${newStatus.apiValue}"
+            )
 
             // 🚩 CLAU: Cridem a la ruta amb l'ID per actualitzar el registre
             val response = api.updateContractStatus(contract.id, request)
@@ -402,7 +410,11 @@ class AuthRepository(private val api: ApiService) {
         }
     }
 
-    suspend fun verifyServiceStep(contractId: Int, code: String, isStart: Boolean): Resource<ContractResponse> {
+    suspend fun verifyServiceStep(
+        contractId: Int,
+        code: String,
+        isStart: Boolean
+    ): Resource<ContractResponse> {
         return try {
             val request = VerifyCodeRequest(code = code) // 🚩 Creem l'objecte correcte
             Log.d("AuthRepository", "Fent POST a ID: $contractId per verificar")
@@ -423,6 +435,73 @@ class AuthRepository(private val api: ApiService) {
             }
         } catch (e: Exception) {
             Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    // Chats
+    suspend fun getConversations(): Resource<List<ConversationResponse>> {
+        return try {
+            val response = api.getConversations()
+            if (response.isSuccessful && response.body() != null) {
+                Resource.Success(response.body()!!)
+            } else {
+                Resource.Error("Error: ${response.code()}")
+            }
+        } catch (e: Exception) { Resource.Error(e.localizedMessage ?: "Unknown error") }
+    }
+
+    suspend fun getMessages(conversationId: Int): Resource<List<MessageResponse>> {
+        return try {
+            val response = api.getChatMessages(conversationId)
+            if (response.isSuccessful && response.body() != null) {
+                // Ara agafem el camp 'results' que gràcies al SerializedName llegirà 'messages' del JSON
+                val messagesList = response.body()?.results ?: emptyList()
+                Resource.Success(messagesList)
+            } else {
+                Resource.Error("Error: ${response.code()}")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    suspend fun createConversation(participantId: Long): Resource<ConversationResponse> {
+        return try {
+            // Creem l'objecte de petició amb l'ID del participant
+            val request = CreateConversationRequest(participantId)
+            Log.d("AuthRepository", request.toString())
+            val response = api.createConversation(request)
+            Log.d("AuthRepository", response.toString())
+
+            if (response.isSuccessful && response.body() != null) {
+                Resource.Success(response.body()!!)
+            } else {
+                val errorMsg = response.errorBody()?.string() ?: "Error code: ${response.code()}"
+                Resource.Error("Could not start conversation: $errorMsg")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    suspend fun sendMessage(conversationId: Int, content: String): Resource<MessageResponse> {
+        return try {
+            val response = api.sendMessage(conversationId, SendMessageRequest(content))
+            if (response.isSuccessful && response.body() != null) {
+                Resource.Success(response.body()!!)
+            } else {
+                Resource.Error("Failed to send message: ${response.code()}")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Connection lost")
+        }
+    }
+
+    suspend fun markAsRead(conversationId: Int) {
+        try {
+            api.markAsRead(conversationId)
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Error marking as read: ${e.localizedMessage}")
         }
     }
 }

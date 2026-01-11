@@ -5,6 +5,12 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.taskify.taskify_android.logic.viewmodels.provideAuthViewModel
+import com.taskify.taskify_android.logic.viewmodels.provideChatViewModel
+import com.taskify.taskify_android.screens.general.authentication.AuthScreen
+import com.taskify.taskify_android.screens.general.authentication.LoginScreen
+import com.taskify.taskify_android.screens.general.authentication.RegisterScreen
+import com.taskify.taskify_android.screens.general.chat.ChatDetailScreen
+import com.taskify.taskify_android.screens.general.chat.InboxScreen
 import com.taskify.taskify_android.screens.general.homescreen.BookingsScreen
 import com.taskify.taskify_android.screens.general.homescreen.SecurityScreen
 
@@ -12,6 +18,7 @@ import com.taskify.taskify_android.screens.general.homescreen.SecurityScreen
 @Composable
 fun NavigationGraph(navController: NavHostController) {
     val authViewModel = provideAuthViewModel()
+    val chatViewModel = provideChatViewModel()
 
     NavHost(navController = navController, startDestination = "initScreen") {
         //  Init screen with animated app name
@@ -36,11 +43,7 @@ fun NavigationGraph(navController: NavHostController) {
 
         // Placeholder Home screen
         composable("homeScreen") {
-            HomeScreen(navController, authViewModel)
-        }
-
-        composable("chat") {
-            ChatScreen(navController)
+            HomeScreen(navController, authViewModel, chatViewModel)
         }
 
         composable("profileInfoScreen") {
@@ -76,6 +79,17 @@ fun NavigationGraph(navController: NavHostController) {
                 providerName = providerName,
                 navController = navController
             )
+        }
+
+        // Pantalla de la llista de xats (Safata d'entrada)
+        composable("inbox") {
+            InboxScreen(navController, authViewModel, chatViewModel)
+        }
+
+        // Pantalla de conversa individual
+        composable("chatDetail/{conversationId}") { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("conversationId")?.toIntOrNull() ?: -1
+            ChatDetailScreen(id, navController, authViewModel, chatViewModel)
         }
     }
 }

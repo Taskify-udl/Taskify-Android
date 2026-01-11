@@ -10,6 +10,11 @@ import com.taskify.taskify_android.data.models.auth.RegisterResponse
 import com.taskify.taskify_android.data.models.auth.UpdateContractStatusRequest
 import com.taskify.taskify_android.data.models.auth.UserResponse
 import com.taskify.taskify_android.data.models.auth.VerifyCodeRequest
+import com.taskify.taskify_android.data.models.chat.ConversationResponse
+import com.taskify.taskify_android.data.models.chat.CreateConversationRequest
+import com.taskify.taskify_android.data.models.chat.MessagePaginationResponse
+import com.taskify.taskify_android.data.models.chat.MessageResponse
+import com.taskify.taskify_android.data.models.chat.SendMessageRequest
 import com.taskify.taskify_android.data.models.entities.ProviderService
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -24,7 +29,7 @@ import retrofit2.http.Part
 import retrofit2.http.Path
 
 interface ApiService {
-
+    // Authentication
     @POST("api/login")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
@@ -34,6 +39,16 @@ interface ApiService {
     @POST("api/register")
     suspend fun register(@Body request: RegisterRequest): Response<RegisterResponse>
 
+    // Profile
+    @GET("api/profile_detail")
+    suspend fun getProfile(): Response<UserResponse>
+
+    @PATCH("api/profile_detail")
+    suspend fun updateProfile(
+        @Body body: Map<String, @JvmSuppressWildcards Any?>
+    ): Response<UserResponse>
+
+    // Services
     @Multipart
     @POST("api/service")
     suspend fun createService(
@@ -51,20 +66,13 @@ interface ApiService {
     @GET("api/service")
     suspend fun getServices(): Response<List<ProviderService>>
 
-    @GET("api/profile_detail")
-    suspend fun getProfile(): Response<UserResponse>
-
-    @PATCH("api/profile_detail")
-    suspend fun updateProfile(
-        @Body body: Map<String, @JvmSuppressWildcards Any?>
-    ): Response<UserResponse>
-
     @PATCH("api/service/{id}")
     suspend fun updateService(
         @Path("id") id: Int,
         @Body body: Map<String, @JvmSuppressWildcards Any?>
     ): Response<ProviderService>
 
+    // Contracts
     @GET("api/contract/mine")
     suspend fun getMyContracts(): Response<List<ContractResponse>>
 
@@ -91,4 +99,25 @@ interface ApiService {
         @Path("id") id: Int,
         @Body request: VerifyCodeRequest
     ): Response<ContractResponse>
+
+    // Chats
+    @GET("api/conversation")
+    suspend fun getConversations(): Response<List<ConversationResponse>>
+
+    @GET("api/conversation/{id}/messages")
+    suspend fun getChatMessages(@Path("id") id: Int): Response<MessagePaginationResponse>
+
+    @POST("api/conversation")
+    suspend fun createConversation(
+        @Body request: CreateConversationRequest
+    ): Response<ConversationResponse>
+
+    @POST("api/conversation/{id}/messages")
+    suspend fun sendMessage(
+        @Path("id") id: Int,
+        @Body request: SendMessageRequest
+    ): Response<MessageResponse>
+
+    @POST("api/conversation/{id}/mark-read")
+    suspend fun markAsRead(@Path("id") id: Int): Response<Map<String, Int>>
 }
