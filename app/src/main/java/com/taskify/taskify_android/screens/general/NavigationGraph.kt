@@ -5,8 +5,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.taskify.taskify_android.logic.viewmodels.provideAuthViewModel
-import com.taskify.taskify_android.screens.general.homescreen.BookingsScreen
-import com.taskify.taskify_android.screens.general.homescreen.SecurityScreen
 
 
 @Composable
@@ -63,7 +61,7 @@ fun NavigationGraph(navController: NavHostController) {
 
         composable("offerDetail/{offerName}") { backStackEntry ->
             val offerName = backStackEntry.arguments?.getString("offerName") ?: "Unknown"
-            BookingsScreen(offerName = offerName, navController = navController)
+            OfferDetailScreen(offerName = offerName, navController = navController)
         }
 
         composable("providerProfile/{providerName}") { backStackEntry ->
@@ -73,5 +71,6 @@ fun NavigationGraph(navController: NavHostController) {
                 navController = navController
             )
         }
+        0
     }
 }
