@@ -8,7 +8,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.taskify.taskify_android.data.models.auth.AuthPreferences
+import com.taskify.taskify_android.data.models.auth.ContractResponse
 import com.taskify.taskify_android.data.models.auth.UserResponse
+import com.taskify.taskify_android.data.models.entities.ContractStatus
 import com.taskify.taskify_android.data.models.entities.Customer
 import com.taskify.taskify_android.data.models.entities.Provider
 import com.taskify.taskify_android.data.models.entities.ProviderService
@@ -21,7 +23,7 @@ import com.taskify.taskify_android.data.repository.Resource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 // Representa l'estat de la UI en el procés de login
 data class AuthUiState(
@@ -44,6 +46,13 @@ class AuthViewModel(
     val createServiceState: LiveData<Resource<ProviderService>> = _createServiceState
     private val _profileState = MutableStateFlow<Resource<User>>(Resource.Loading())
     val profileState: StateFlow<Resource<User>> = _profileState
+
+    // NOU ESTAT PER ALS CONTRACTES
+    private val _contractsState = MutableStateFlow<Resource<List<ContractResponse>>>(Resource.Loading())
+    val contractsState: StateFlow<Resource<List<ContractResponse>>> = _contractsState
+    // Inicialment pot ser Loading o un estat buit si tinguessis Resource.Idle
+    private val _contractDetailState = MutableStateFlow<Resource<ContractResponse>>(Resource.Loading())
+    val contractDetailState: StateFlow<Resource<ContractResponse>> = _contractDetailState
 
     private val _serviceListState =
         MutableStateFlow<Resource<List<ProviderService>>>(Resource.Loading())
@@ -411,4 +420,109 @@ class AuthViewModel(
         _authState.value = AuthUiState()
     }
 
+    // ============================================================================================
+    // ---------- CONTRACTS LOGIC ----------
+    // ============================================================================================
+
+    /**
+     * Carrega la llista de contractes de l'usuari actual.
+     */
+    fun getMyContracts() {
+        viewModelScope.launch {
+            _contractsState.value = Resource.Loading()
+            val result = repository.getMyContracts()
+            _contractsState.value = result
+        }
+    }
+
+    /**
+     * Crea una nova sol·licitud de contracte.
+     * @param serviceId L'ID del servei.
+     * @param date Data seleccionada (LocalDate).
+     * @param time Hora seleccionada (LocalTime).
+     * @param price Preu del servei (Double o String que convertirem).
+     * @param description Notes addicionals (opcional, encara que l'API actual no ho suporta, ho preparem).
+     */
+    fun createContract(
+        serviceId: Int,
+        date: java.time.LocalDate,
+        time: java.time.LocalTime,
+        price: Double,
+        description: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            // 1. Formatar DATA: "YYYY-MM-DD" (Sense hora)
+            val dateString = date.format(DateTimeFormatter.ISO_LOCAL_DATE)
+
+            // 2. Formatar HORA: "HH:mm:ss" (o "HH:mm")
+            // Utilitzem un patró per assegurar-nos que Django ho entén bé
+            val timeString = time.format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+
+            Log.d("AuthViewModel", "Sending Contract -> Date: $dateString, Time: $timeString")
+
+            // 3. Cridar al repositori amb els camps separats
+            when (val result = repository.createContract(serviceId, dateString, timeString, price, description)) {
+                is Resource.Success -> {
+                    getMyContracts()
+                    onSuccess()
+                }
+                is Resource.Error -> {
+                    onError(result.message)
+                }
+                else -> {}
+            }
+        }
+    }
+
+    /**
+     * Carrega els detalls d'un contracte específic per ID.
+     * S'utilitzarà a la pantalla de "Order Details" (Booking Details).
+     */
+    fun getContractDetail(contractId: Int) {
+        viewModelScope.launch {
+            // 1. Posem l'estat en Loading perquè la UI mostri l'spinner
+            _contractDetailState.value = Resource.Loading()
+
+            // 2. Cridem al repositori
+            val result = repository.getContractDetail(contractId)
+
+            // 3. Actualitzem l'estat amb el resultat (Success o Error)
+            _contractDetailState.value = result
+        }
+    }
+
+    /**
+     * Canvia l'estat d'un contracte i refresca la llista
+     */
+    fun updateContractStatus(contract: ContractResponse, newStatus: ContractStatus) {
+        viewModelScope.launch {
+            val result = repository.updateContractStatus(contract, newStatus)
+            if (result is Resource.Success) {
+                // Recarreguem la llista per moure l'element de pestanya automàticament
+                getMyContracts()
+            }
+        }
+    }
+
+    fun verifyContractCode(contractId: Int, code: String, isStart: Boolean, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            val result = repository.verifyServiceStep(contractId, code, isStart)
+            if (result is Resource.Success) {
+                getMyContracts() // Refresca la llista per canviar d'Accepted a Active o Finished
+                onSuccess()
+            } else if (result is Resource.Error) {
+                onError(result.message)
+            }
+        }
+    }
+
+    /**
+     * Opcional: Neteja l'estat del detall quan surts de la pantalla
+     * per evitar veure dades antigues en obrir un altre contracte.
+     */
+    fun clearContractDetail() {
+        _contractDetailState.value = Resource.Loading()
+    }
 }

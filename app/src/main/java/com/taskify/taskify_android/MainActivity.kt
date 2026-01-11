@@ -14,7 +14,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TaskifyAndroidTheme() {
-                // NavigationGraph
                 val navController = rememberNavController()
                 NavigationGraph(navController = navController)
             }

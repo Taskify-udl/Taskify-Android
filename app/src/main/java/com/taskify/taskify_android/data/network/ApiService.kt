@@ -1,12 +1,15 @@
 package com.taskify.taskify_android.data.network
 
-import com.taskify.taskify_android.data.models.auth.CreateServiceRequest
+import com.taskify.taskify_android.data.models.auth.ContractResponse
+import com.taskify.taskify_android.data.models.auth.CreateContractRequest
 import com.taskify.taskify_android.data.models.auth.LoginRequest
 import com.taskify.taskify_android.data.models.auth.LoginResponse
 import com.taskify.taskify_android.data.models.auth.LogoutResponse
 import com.taskify.taskify_android.data.models.auth.RegisterRequest
 import com.taskify.taskify_android.data.models.auth.RegisterResponse
+import com.taskify.taskify_android.data.models.auth.UpdateContractStatusRequest
 import com.taskify.taskify_android.data.models.auth.UserResponse
+import com.taskify.taskify_android.data.models.auth.VerifyCodeRequest
 import com.taskify.taskify_android.data.models.entities.ProviderService
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -14,7 +17,6 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
-import retrofit2.http.Headers
 import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
@@ -62,4 +64,31 @@ interface ApiService {
         @Path("id") id: Int,
         @Body body: Map<String, @JvmSuppressWildcards Any?>
     ): Response<ProviderService>
+
+    @GET("api/contract/mine")
+    suspend fun getMyContracts(): Response<List<ContractResponse>>
+
+    @POST("api/contract")
+    suspend fun createContract(@Body request: CreateContractRequest): Response<ContractResponse>
+
+    @GET("api/contract/{id}")
+    suspend fun getContractDetail(@Path("id") id: Int): Response<ContractResponse>
+
+    @PATCH("api/contract/{id}")
+    suspend fun updateContractStatus(
+        @Path("id") id: Int,
+        @Body request: UpdateContractStatusRequest
+    ): Response<ContractResponse>
+
+    @POST("api/contract/{id}/start")
+    suspend fun startContract(
+        @Path("id") id: Int,
+        @Body request: VerifyCodeRequest
+    ): Response<ContractResponse>
+
+    @POST("api/contract/{id}/stop")
+    suspend fun stopContract(
+        @Path("id") id: Int,
+        @Body request: VerifyCodeRequest
+    ): Response<ContractResponse>
 }
