@@ -5,12 +5,16 @@ import android.net.Uri
 import android.util.Log
 import com.google.gson.Gson
 import com.taskify.taskify_android.data.models.auth.AuthPreferences
-import com.taskify.taskify_android.data.models.auth.CreateServiceRequest
+import com.taskify.taskify_android.data.models.auth.ContractResponse
+import com.taskify.taskify_android.data.models.auth.CreateContractRequest
 import com.taskify.taskify_android.data.models.auth.LoginRequest
 import com.taskify.taskify_android.data.models.auth.LoginResponse
 import com.taskify.taskify_android.data.models.auth.RegisterRequest
 import com.taskify.taskify_android.data.models.auth.RegisterResponse
+import com.taskify.taskify_android.data.models.auth.UpdateContractStatusRequest
 import com.taskify.taskify_android.data.models.auth.UserResponse
+import com.taskify.taskify_android.data.models.auth.VerifyCodeRequest
+import com.taskify.taskify_android.data.models.entities.ContractStatus
 import com.taskify.taskify_android.data.models.entities.ProviderService
 import com.taskify.taskify_android.data.models.entities.UserDraft
 import com.taskify.taskify_android.data.network.ApiService
@@ -149,7 +153,9 @@ class AuthRepository(private val api: ApiService) {
     // Funció Helper per crear RequestBody per a text simple (OK per a name, description, price...)
     private fun String.toTextRequestBody(): RequestBody {
         // Mantenim text/plain
-        return this.toRequestBody("text/plain".toMediaTypeOrNull() ?: throw IllegalStateException("Invalid Media Type"))
+        return this.toRequestBody(
+            "text/plain".toMediaTypeOrNull() ?: throw IllegalStateException("Invalid Media Type")
+        )
     }
 
     // 🚩 HELPER: Converteix una URI local en una Part de MultipartBody
@@ -183,12 +189,11 @@ class AuthRepository(private val api: ApiService) {
         description: String,
         price: Int,
         providerId: Long,
-        imageUri: Uri?, // 🚩 AFEGIT
-        context: Context // 🚩 AFEGIT
+        imageUri: Uri?,
+        context: Context
     ): Resource<ProviderService> {
         val now = LocalDateTime.now().toString() + "Z"
 
-        // ... (Preparació de parts de text: namePart, categoriesPart, pricePart, etc.)
         val categoryIdString = categoryIds.firstOrNull()?.toString()
             ?: return Resource.Error("Category ID is missing.")
 
@@ -201,18 +206,14 @@ class AuthRepository(private val api: ApiService) {
         val updatedAtPart = now.toTextRequestBody()
 
 
-        // 2. Preparació de la Part de la Imatge
         val imagePart: MultipartBody.Part? = if (imageUri != null && imageUri.scheme == "content") {
-            // Només intentem processar la URI si és local (content:// o file://)
-            context.getMultipartImagePart(imageUri, "image") // 🚨 Usa "image" o "images" segons el teu backend
+            context.getMultipartImagePart(imageUri, "image")
         } else {
             null
         }
 
         Log.d("AuthRepository", "Image Part is null: ${imagePart == null}")
 
-
-        // 3. Crida a l'API
         return try {
             val response = api.createService(
                 name = namePart,
@@ -222,9 +223,8 @@ class AuthRepository(private val api: ApiService) {
                 price = pricePart,
                 createdAt = createdAtPart,
                 updatedAt = updatedAtPart,
-                image = imagePart // 🚩 Passem la Part de la imatge (pot ser nul·la)
+                image = imagePart
             )
-            // ... (resta de la gestió d'errors)
             if (response.isSuccessful && response.body() != null) {
                 Resource.Success(response.body()!!)
             } else {
@@ -267,6 +267,159 @@ class AuthRepository(private val api: ApiService) {
             } else {
                 val errorBody = response.errorBody()?.string() ?: "Unknown error"
                 Resource.Error("Error updating service: ${response.code()} - $errorBody")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    // ============================================================================================
+    // ---------- CONTRACTS (BOOKINGS) ----------
+    // ============================================================================================
+
+    /**
+     * Crea un nou contracte (reserva).
+     * @param serviceId L'ID del servei a contractar.
+     * @param startDate La data en format string (ex: "2026-01-11T14:30:00").
+     * @param price El preu com a Double.
+     */
+    suspend fun createContract(
+        serviceId: Int,
+        startDate: String,
+        startTime: String, // <--- NOU PARÀMETRE
+        price: Double,
+        description: String
+    ): Resource<ContractResponse> {
+        return try {
+            val request = CreateContractRequest(
+                service = serviceId,
+                startDate = startDate,
+                startTime = startTime, // <--- AFEGIT AL REQUEST
+                price = price,
+                description = description
+            )
+            Log.d("AuthRepository", "createContract request: $request")
+
+            val response = api.createContract(request)
+
+            Log.d(
+                "AuthRepository",
+                "createContract response: ${response.code()} ${response.message()}"
+            )
+
+            if (response.isSuccessful && response.body() != null) {
+                Resource.Success(response.body()!!)
+            } else {
+                val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                Log.e(
+                    "AuthRepository",
+                    "Error creating contract: $errorBody"
+                ) // Log d'error millorat
+                Resource.Error("Failed to create contract: ${response.code()} - $errorBody")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    /**
+     * Obté la llista de contractes de l'usuari (provider o customer)
+     * Endpoint: /api/contract/mine
+     */
+    suspend fun getMyContracts(): Resource<List<ContractResponse>> {
+        return try {
+            val response = api.getMyContracts()
+            Log.d(
+                "AuthRepository",
+                "getMyContracts response: ${response.code()} ${response.message()}"
+            )
+
+            if (response.isSuccessful && response.body() != null) {
+                Resource.Success(response.body()!!)
+            } else {
+                val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                Resource.Error("Failed to load contracts: ${response.code()} - $errorBody")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    /**
+     * Obté el detall d'un contracte específic per ID.
+     */
+    suspend fun getContractDetail(contractId: Int): Resource<ContractResponse> {
+        return try {
+            val response = api.getContractDetail(contractId)
+            if (response.isSuccessful && response.body() != null) {
+                Resource.Success(response.body()!!)
+            } else {
+                Resource.Error("Failed to load contract details: ${response.code()}")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    /**
+     * Actualitza l'estat d'un contracte utilitzant l'Enum.
+     */
+    /**
+     * Actualitza l'estat d'un contracte existent mitjançant PATCH.
+     * Utilitza l'ID a la URL per evitar la creació de duplicats.
+     */
+    suspend fun updateContractStatus(
+        contract: ContractResponse,
+        newStatus: ContractStatus
+    ): Resource<ContractResponse> {
+        return try {
+            // Creem l'objecte de petició basat en les dades actuals
+            val request = UpdateContractStatusRequest(
+                service = contract.serviceId,
+                startDate = contract.startDate,
+                startTime = contract.startTime ?: "12:00:00",
+                price = contract.price?.toDoubleOrNull() ?: 0.0,
+                description = contract.description ?: "",
+                status = newStatus
+            )
+
+            Log.d("AuthRepository", "Fent PATCH a ID: ${contract.id} per canviar a ${newStatus.apiValue}")
+
+            // 🚩 CLAU: Cridem a la ruta amb l'ID per actualitzar el registre
+            val response = api.updateContractStatus(contract.id, request)
+
+            if (response.isSuccessful && response.body() != null) {
+                Log.d("AuthRepository", "Contracte ${contract.id} actualitzat amb èxit!")
+                Resource.Success(response.body()!!)
+            } else {
+                val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                Log.e("AuthRepository", "Error en l'actualització: $errorBody")
+                Resource.Error("Error: ${response.code()} - $errorBody")
+            }
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Error de xarxa: ${e.localizedMessage}")
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    suspend fun verifyServiceStep(contractId: Int, code: String, isStart: Boolean): Resource<ContractResponse> {
+        return try {
+            val request = VerifyCodeRequest(code = code) // 🚩 Creem l'objecte correcte
+            Log.d("AuthRepository", "Fent POST a ID: $contractId per verificar")
+
+            val response = if (isStart) {
+                api.startContract(contractId, request)
+            } else {
+                api.stopContract(contractId, request)
+            }
+            Log.d("AuthRepository", "Response: $response")
+
+
+            if (response.isSuccessful && response.body() != null) {
+                Resource.Success(response.body()!!)
+            } else {
+                val errorMsg = response.errorBody()?.string() ?: "Invalid code"
+                Resource.Error(errorMsg)
             }
         } catch (e: Exception) {
             Resource.Error("Network error: ${e.localizedMessage}")

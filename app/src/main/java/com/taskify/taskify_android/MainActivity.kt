@@ -13,8 +13,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            TaskifyAndroidTheme() { // ⬅️ PROSLEDJUJEMO TRENUTNO STANJE TEME
-                // NavigationGraph
+            TaskifyAndroidTheme() {
                 val navController = rememberNavController()
                 NavigationGraph(navController = navController)
             }

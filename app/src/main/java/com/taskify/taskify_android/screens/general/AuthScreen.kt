@@ -146,9 +146,6 @@ fun AuthScreen(navController: NavHostController) {
                         .height(52.dp),
                     isOutlined = true
                 )
-
-                // 🌐 Language switcher
-                LanguageSwitcher()
             }
         }
     }
@@ -205,59 +202,3 @@ fun AnimatedButton(
         }
     }
 }
-
-@Composable
-fun LanguageSwitcher() {
-    val context = LocalContext.current
-    var currentLang by remember { mutableStateOf("EN") }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(
-                Brush.horizontalGradient(
-                    colors = listOf(BrandBlue.copy(alpha = 0.8f), Color.Cyan.copy(alpha = 0.8f))
-                )
-            )
-            .border(1.dp, BrandBlue, RoundedCornerShape(12.dp))
-            .padding(horizontal = 16.dp)
-            .clickable {
-                // ciklično mijenjamo jezik
-                currentLang = when (currentLang) {
-                    "EN" -> "ES"
-                    "ES" -> "CA"
-                    else -> "EN"
-                }
-
-                // Promjena jezika u aplikaciji
-                setAppLocale(context, currentLang.lowercase())
-
-            },
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "🌐 Language: $currentLang",
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            fontSize = 16.sp,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
-// Jedina funkcija za promjenu jezika
-fun setAppLocale(context: Context, languageCode: String) {
-    val locale = Locale(languageCode)
-    Locale.setDefault(locale)
-    val config = Configuration(context.resources.configuration)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        config.setLocale(locale)
-        context.resources.updateConfiguration(config, context.resources.displayMetrics)
-    } else {
-        config.locale = locale
-        context.resources.updateConfiguration(config, context.resources.displayMetrics)
-    }
-}
-
