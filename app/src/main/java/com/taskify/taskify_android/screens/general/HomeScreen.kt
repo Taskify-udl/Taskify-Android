@@ -1,5 +1,6 @@
 package com.taskify.taskify_android.screens.general
 
+import android.content.Context
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -32,6 +33,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
+import com.taskify.taskify_android.data.repository.Resource
 import com.taskify.taskify_android.logic.viewmodels.ChatViewModel
 import com.taskify.taskify_android.ui.theme.*
 import com.taskify.taskify_android.screens.general.homescreen.CreateServiceScreen
@@ -42,7 +44,11 @@ import com.taskify.taskify_android.screens.general.homescreen.SettingsScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController, authViewModel: AuthViewModel, chatViewModel: ChatViewModel) {
+fun HomeScreen(
+    navController: NavController,
+    authViewModel: AuthViewModel,
+    chatViewModel: ChatViewModel
+) {
     val user by authViewModel.currentUser.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
     var searchQuery by remember { mutableStateOf("") }
@@ -55,6 +61,50 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel, chatV
         context.getString(R.string.tab_orders),
         context.getString(R.string.tab_settings)
     )
+
+    // Dins de HomeScreen
+    val contractsResource by authViewModel.contractsState.collectAsState()
+
+    // 🆕 Variable per forçar el recàlcul quan netegem manualment
+    var manualRefreshTrigger by remember { mutableIntStateOf(0) }
+
+    // Càlcul de notificacions
+    val unreadNotificationsCount by remember(contractsResource, manualRefreshTrigger) {
+        derivedStateOf {
+            if (contractsResource is Resource.Success) {
+                val contracts = (contractsResource as Resource.Success).data
+                val sharedPrefs =
+                    context.getSharedPreferences("taskify_prefs", Context.MODE_PRIVATE)
+
+                contracts.count { contract ->
+                    val lastSeenStatus =
+                        sharedPrefs.getString("contract_status_${contract.id}", null)
+                    lastSeenStatus == null || lastSeenStatus != contract.status.name
+                }
+            } else 0
+        }
+    }
+
+    // 🆕 Funció per marcar-ho tot com a llegit (neteja el badge)
+    val clearBadge = {
+        if (contractsResource is Resource.Success) {
+            val contracts = (contractsResource as Resource.Success).data
+            val sharedPrefs = context.getSharedPreferences("taskify_prefs", Context.MODE_PRIVATE)
+            val editor = sharedPrefs.edit()
+            contracts.forEach { contract ->
+                editor.putString(
+                    "contract_status_${contract.id}",
+                    contract.status.name
+                )
+            }
+            editor.apply()
+            manualRefreshTrigger++ // Força el recàlcul a 0
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        authViewModel.startFastPolling(context)
+    }
 
     // 🌈 Animated gradient background
     val infiniteTransition = rememberInfiniteTransition(label = "homeBgAnim")
@@ -108,12 +158,21 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel, chatV
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = { /* TODO: Notifications */ }) {
-                            Icon(
-                                imageVector = Icons.Default.Notifications,
-                                contentDescription = context.getString(R.string.notifications),
-                                tint = BrandBlue
-                            )
+                        IconButton(onClick = {
+                            clearBadge()
+                            selectedTab != 3
+                        }) {
+                            BadgedBox(
+                                badge = {
+                                    if (unreadNotificationsCount > 0) {
+                                        Badge(containerColor = Color.Red) {
+                                            Text(unreadNotificationsCount.toString())
+                                        }
+                                    }
+                                }
+                            ) {
+                                Icon(Icons.Default.Notifications, contentDescription = null, tint = BrandBlue)
+                            }
                         }
                     },
                     actions = {
@@ -131,7 +190,10 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel, chatV
                 )
             },
             bottomBar = {
-                BottomNavigationBar(selectedTab) { selectedTab = it }
+                BottomNavigationBar(selectedTab) { index ->
+                    if (index == 3) clearBadge()
+                    selectedTab = index
+                }
             },
             containerColor = Color.Transparent
         ) { padding ->
@@ -151,7 +213,12 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel, chatV
 
                     1 -> FavoritesScreen(navController)
                     2 -> CreateServiceScreen(user, authViewModel, navController)
-                    3 -> OrdersScreen(authViewModel = authViewModel, chatViewModel = chatViewModel, navController = navController)
+                    3 -> OrdersScreen(
+                        authViewModel = authViewModel,
+                        chatViewModel = chatViewModel,
+                        navController = navController
+                    )
+
                     4 -> SettingsScreen(
                         navController = navController,
                         authViewModel = authViewModel

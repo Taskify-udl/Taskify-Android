@@ -46,6 +46,7 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.Executors
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -63,8 +64,26 @@ fun OrdersScreen(
 ) {
     val contractsState by authViewModel.contractsState.collectAsState()
     val currentUser by authViewModel.currentUser.collectAsState()
+    val context = LocalContext.current
 
-    var selectedTab by remember { mutableIntStateOf(1) } // Requests per defecte
+    var selectedTab by remember { mutableIntStateOf(1) }
+
+    // 1. Extraiem la llista de forma segura a una variable local
+    val contractsList = (contractsState as? Resource.Success)?.data ?: emptyList()
+
+    // 2. Usem la llista (que és un List estable) com a clau del LaunchedEffect
+    LaunchedEffect(contractsList) {
+        if (contractsList.isNotEmpty()) {
+            val sharedPrefs = context.getSharedPreferences("taskify_prefs", Context.MODE_PRIVATE)
+            val editor = sharedPrefs.edit()
+
+            contractsList.forEach { contract ->
+                editor.putString("contract_status_${contract.id}", contract.status.name)
+            }
+            editor.apply()
+            Log.d("OrdersScreen", "Badge cleared: Marked ${contractsList.size} contracts as seen")
+        }
+    }
 
     LaunchedEffect(Unit) {
         authViewModel.getMyContracts()
@@ -88,6 +107,7 @@ fun OrdersScreen(
                         it.status == ContractStatus.REJECTED ||
                         it.status == ContractStatus.CANCELLED
             }
+
 
             else -> emptyList()
         }
