@@ -107,7 +107,7 @@
     <string name="tab_favorites">Preferits</string>
     <string name="tab_taskify">Taskify</string>
     <string name="tab_orders">Comandes</string>
-    <string name="tab_settings">Configuraci\'o</string>
+    <string name="tab_settings">Configuració</string>
 
     <!-- Top bar -->
     <string name="notifications">Notificacions</string>
