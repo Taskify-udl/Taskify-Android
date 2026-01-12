@@ -37,6 +37,16 @@ android {
     buildFeatures {
         compose = true
     }
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+    bundle {
+        abi {
+            enableSplit = true
+        }
+    }
 }
 
 dependencies {

@@ -160,7 +160,7 @@ fun HomeScreen(
                     navigationIcon = {
                         IconButton(onClick = {
                             clearBadge()
-                            selectedTab != 3
+                            selectedTab = 3
                         }) {
                             BadgedBox(
                                 badge = {
@@ -169,7 +169,7 @@ fun HomeScreen(
                                             Text(unreadNotificationsCount.toString())
                                         }
                                     }
-                                }
+                                },
                             ) {
                                 Icon(Icons.Default.Notifications, contentDescription = null, tint = BrandBlue)
                             }
